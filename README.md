@@ -11,7 +11,8 @@ The default experiment uses the public `lambdalabs/pokemon-blip-captions` datase
 3. Mask padding tokens in the language-model labels so they do not contribute to the loss.
 4. Fine-tune `BlipForConditionalGeneration` with `Seq2SeqTrainer`, warmup, weight decay, and gradient accumulation.
 5. Generate captions for the validation images and report exact match and token-level F1.
-6. Save the trained model and processor for local image captioning.
+6. Save per-example references and predictions for qualitative error analysis.
+7. Save the trained model and processor for local image captioning.
 
 ## Setup
 
@@ -44,6 +45,13 @@ python -m vlm_finetune.train \
   --report-dir reports/smoke-run
 ```
 
+Training can continue from a saved Trainer checkpoint:
+
+```bash
+python -m vlm_finetune.train \
+  --resume-from-checkpoint artifacts/blip-captioner/checkpoint-100
+```
+
 The default configuration uses a maximum caption length of 64 tokens, batch size 4, learning rate `5e-5`, and one epoch. These are starting points for a small experiment, not fixed assumptions about every dataset.
 
 ## Inference
@@ -59,11 +67,21 @@ python -m vlm_finetune.infer \
 
 The command prints one JSON record per image with its path and generated caption. `--num-beams` controls deterministic beam-search width during generation. Use `--device cuda`, `--device mps`, or `--device cpu` to select a device explicitly; `auto` selects the first available accelerator.
 
+For a folder of images, use `--image-dir`; add `--recursive` to include nested folders:
+
+```bash
+python -m vlm_finetune.infer \
+  --model-dir artifacts/blip-captioner \
+  --image-dir examples \
+  --recursive
+```
+
 ## Outputs
 
 - `artifacts/blip-captioner/` contains the fine-tuned model, processor, and Trainer checkpoints.
 - `reports/run_config.json` records the experiment settings.
 - `reports/metrics.json` contains training metrics and validation caption metrics.
+- `reports/caption_predictions.json` stores validation references and generated captions for review.
 - `artifacts/blip-captioner/run_results.json` is the raw metrics file written by the Trainer.
 
 ## Project layout
