@@ -9,6 +9,7 @@ from datasets import DatasetDict
 
 from .config import FineTuneConfig, prepare_output_directories
 from .data import load_caption_dataset, prepare_dataset
+from .evaluate import evaluate_captions
 from .model import load_blip
 from .training import run_training
 
@@ -57,6 +58,16 @@ def run(config: FineTuneConfig) -> dict:
         train_dataset=tokenized_dataset["train"],
         validation_dataset=tokenized_dataset["validation"],
         config=config,
+    )
+    metrics["generation"] = evaluate_captions(
+        model=model,
+        processor=processor,
+        dataset=raw_dataset["validation"],
+        device=next(model.parameters()).device,
+        image_column=config.image_column,
+        caption_column=config.caption_column,
+        batch_size=config.eval_batch_size,
+        max_new_tokens=config.max_new_tokens,
     )
     _write_json(metrics, config.report_dir / "metrics.json")
     return metrics
