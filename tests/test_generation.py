@@ -36,6 +36,17 @@ def test_generation_batches_images() -> None:
     assert captions == ["a small object"] * 3
 
 
+def test_generation_rejects_invalid_beam_count() -> None:
+    with pytest.raises(ValueError, match="num_beams"):
+        generate_captions(
+            TinyModel(),
+            TinyProcessor(),
+            ["one"],
+            torch.device("cpu"),
+            num_beams=0,
+        )
+
+
 def test_caption_metrics_include_token_overlap() -> None:
     metrics = caption_metrics(
         ["a red car", "a blue bike"],
