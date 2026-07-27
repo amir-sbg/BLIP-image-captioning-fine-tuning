@@ -68,6 +68,7 @@ def run(config: FineTuneConfig) -> dict:
         caption_column=config.caption_column,
         batch_size=config.eval_batch_size,
         max_new_tokens=config.max_new_tokens,
+        predictions_path=config.report_dir / "caption_predictions.json",
     )
     _write_json(metrics, config.report_dir / "metrics.json")
     return metrics

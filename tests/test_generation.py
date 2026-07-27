@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 import torch
 
+from vlm_finetune.evaluate import save_caption_predictions
 from vlm_finetune.generation import generate_captions
 from vlm_finetune.metrics import caption_metrics
 
@@ -60,3 +61,15 @@ def test_caption_metrics_include_token_overlap() -> None:
 def test_caption_metrics_reject_length_mismatch() -> None:
     with pytest.raises(ValueError, match="same length"):
         caption_metrics(["one"], [])
+
+
+def test_caption_predictions_are_saved_for_review(tmp_path) -> None:
+    output_path = tmp_path / "reports" / "caption_predictions.json"
+    save_caption_predictions(
+        ["a red car", "a blue bike"],
+        ["red car", "a green bike"],
+        output_path,
+    )
+    records = output_path.read_text()
+    assert '"reference": "a red car"' in records
+    assert '"prediction": "a green bike"' in records
