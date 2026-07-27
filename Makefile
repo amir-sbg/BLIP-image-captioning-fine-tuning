@@ -8,7 +8,7 @@ test:
 	python -m pytest -q
 
 train:
-	python -m vlm_finetune.train
+	PYTHONPATH=src python -m vlm_finetune.train
 
 clean:
 	rm -rf artifacts reports build dist src/*.egg-info
