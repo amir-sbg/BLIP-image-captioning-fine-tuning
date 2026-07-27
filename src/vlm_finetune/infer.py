@@ -27,6 +27,7 @@ def caption_files(
     device_name: str = "auto",
     batch_size: int = 4,
     max_new_tokens: int = 32,
+    num_beams: int = 3,
 ) -> list[dict[str, str]]:
     device = _select_device(device_name)
     model, processor = load_blip(str(model_dir))
@@ -41,6 +42,7 @@ def caption_files(
         device=device,
         batch_size=batch_size,
         max_new_tokens=max_new_tokens,
+        num_beams=num_beams,
     )
     return [
         {"image": str(path), "caption": caption}
@@ -55,6 +57,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--device", default="auto")
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--max-new-tokens", type=int, default=32)
+    parser.add_argument("--num-beams", default=3)
     return parser
 
 
@@ -68,6 +71,7 @@ if __name__ == "__main__":
                 device_name=args.device,
                 batch_size=args.batch_size,
                 max_new_tokens=args.max_new_tokens,
+                num_beams=args.num_beams,
             ),
             indent=2,
         )

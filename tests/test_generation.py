@@ -21,7 +21,7 @@ class TinyModel:
     def eval(self):
         return self
 
-    def generate(self, pixel_values, max_new_tokens):
+    def generate(self, pixel_values, max_new_tokens, num_beams):
         return torch.zeros((len(pixel_values), 3), dtype=torch.long)
 
 

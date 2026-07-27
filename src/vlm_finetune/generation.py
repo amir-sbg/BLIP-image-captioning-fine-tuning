@@ -18,11 +18,14 @@ def generate_captions(
     device: torch.device,
     batch_size: int = 4,
     max_new_tokens: int = 32,
+    num_beams: int = 3,
 ) -> list[str]:
     if batch_size < 1:
         raise ValueError("batch_size must be at least 1")
     if max_new_tokens < 1:
         raise ValueError("max_new_tokens must be at least 1")
+    if num_beams < 1:
+        raise ValueError("num_beams must be at least 1")
     if not images:
         return []
 
@@ -38,6 +41,7 @@ def generate_captions(
             generated_ids = model.generate(
                 **inputs,
                 max_new_tokens=max_new_tokens,
+                num_beams=num_beams,
             )
             captions.extend(
                 caption.strip()
