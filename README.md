@@ -1,0 +1,81 @@
+# BLIP Image Captioning Fine-Tuning
+
+A compact VLM fine-tuning project for adapting **BLIP** to an image-caption dataset. It covers the full path from dataset preparation to training, generation-based evaluation, and inference on local images using PyTorch and Hugging Face Transformers.
+
+The default experiment uses the public `lambdalabs/pokemon-blip-captions` dataset and `Salesforce/blip-image-captioning-base`. The sample limits keep the first run manageable while leaving the dataset, model, and training settings configurable from the command line.
+
+## Pipeline
+
+1. Load an image-caption dataset and create a reproducible train/validation split.
+2. Convert images to RGB and tokenize captions with `BlipProcessor`.
+3. Mask padding tokens in the language-model labels so they do not contribute to the loss.
+4. Fine-tune `BlipForConditionalGeneration` with `Seq2SeqTrainer`, warmup, weight decay, and gradient accumulation.
+5. Generate captions for the validation images and report exact match and token-level F1.
+6. Save the trained model and processor for local image captioning.
+
+## Setup
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m pip install -e .
+python -m pytest -q
+```
+
+The training command needs access to the Hugging Face Hub the first time it downloads the dataset and base model. A CUDA-enabled PyTorch installation is recommended, but the code also runs on CPU for small experiments.
+
+## Train
+
+Run the default small experiment:
+
+```bash
+python -m vlm_finetune.train
+```
+
+For a quick local smoke run, reduce both sample limits and the number of epochs:
+
+```bash
+python -m vlm_finetune.train \
+  --max-train-samples 32 \
+  --max-validation-samples 8 \
+  --epochs 1 \
+  --output-dir artifacts/smoke-run \
+  --report-dir reports/smoke-run
+```
+
+The default configuration uses a maximum caption length of 64 tokens, batch size 4, learning rate `5e-5`, and one epoch. These are starting points for a small experiment, not fixed assumptions about every dataset.
+
+## Inference
+
+After training, generate captions for local images:
+
+```bash
+python -m vlm_finetune.infer \
+  --model-dir artifacts/blip-captioner \
+  --image examples/photo-one.jpg examples/photo-two.jpg
+```
+
+The command prints one JSON record per image with its path and generated caption. Use `--device cuda`, `--device mps`, or `--device cpu` to select a device explicitly; `auto` selects the first available accelerator.
+
+## Outputs
+
+- `artifacts/blip-captioner/` contains the fine-tuned model, processor, and Trainer checkpoints.
+- `reports/run_config.json` records the experiment settings.
+- `reports/metrics.json` contains training metrics and validation caption metrics.
+- `artifacts/blip-captioner/run_results.json` is the raw metrics file written by the Trainer.
+
+## Project layout
+
+```text
+src/vlm_finetune/
+├── config.py       experiment settings and validation
+├── data.py         dataset loading and processor preparation
+├── model.py        BLIP model and processor loading
+├── training.py     Hugging Face Trainer configuration
+├── train.py        end-to-end fine-tuning command
+├── generation.py   batched caption generation
+├── metrics.py      lightweight caption metrics
+├── evaluate.py     validation-set evaluation
+└── infer.py        local-image inference command
+```
