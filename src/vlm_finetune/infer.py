@@ -10,6 +10,22 @@ from PIL import Image
 from .generation import generate_captions
 from .model import load_blip
 
+IMAGE_EXTENSIONS = frozenset({".jpeg", ".jpg", ".png", ".webp", ".bmp"})
+
+
+def discover_image_paths(image_dir: Path, recursive: bool = False) -> list[Path]:
+    if not image_dir.is_dir():
+        raise ValueError(f"image directory not found: {image_dir}")
+    candidates = image_dir.rglob("*") if recursive else image_dir.iterdir()
+    return sorted(
+        (
+            path
+            for path in candidates
+            if path.is_file() and path.suffix.lower() in IMAGE_EXTENSIONS
+        ),
+        key=lambda path: str(path).lower(),
+    )
+
 
 def _select_device(name: str) -> torch.device:
     if name != "auto":
@@ -53,7 +69,10 @@ def caption_files(
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Generate captions with a fine-tuned BLIP model.")
     parser.add_argument("--model-dir", type=Path, required=True)
-    parser.add_argument("--image", type=Path, nargs="+", required=True)
+    image_inputs = parser.add_mutually_exclusive_group(required=True)
+    image_inputs.add_argument("--image", type=Path, nargs="+")
+    image_inputs.add_argument("--image-dir", type=Path)
+    parser.add_argument("--recursive", action="store_true")
     parser.add_argument("--device", default="auto")
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--max-new-tokens", type=int, default=32)
@@ -62,12 +81,21 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 if __name__ == "__main__":
-    args = build_parser().parse_args()
+    parser = build_parser()
+    args = parser.parse_args()
+    image_paths = args.image
+    if args.image_dir is not None:
+        try:
+            image_paths = discover_image_paths(args.image_dir, args.recursive)
+        except ValueError as error:
+            parser.error(str(error))
+        if not image_paths:
+            parser.error("no supported image files were found")
     print(
         json.dumps(
             caption_files(
                 model_dir=args.model_dir,
-                image_paths=args.image,
+                image_paths=image_paths,
                 device_name=args.device,
                 batch_size=args.batch_size,
                 max_new_tokens=args.max_new_tokens,
