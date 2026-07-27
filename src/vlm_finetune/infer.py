@@ -57,7 +57,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--device", default="auto")
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--max-new-tokens", type=int, default=32)
-    parser.add_argument("--num-beams", default=3)
+    parser.add_argument("--num-beams", type=int, default=3)
     return parser
 
 
