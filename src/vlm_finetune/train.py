@@ -98,6 +98,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-train-samples", type=int, default=512)
     parser.add_argument("--max-validation-samples", type=int, default=64)
     parser.add_argument("--max-new-tokens", type=int, default=32)
+    parser.add_argument("--resume-from-checkpoint", type=Path)
     parser.add_argument("--seed", type=int, default=42)
     return parser
 

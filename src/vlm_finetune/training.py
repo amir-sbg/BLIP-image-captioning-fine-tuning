@@ -69,7 +69,10 @@ def run_training(
         validation_dataset=validation_dataset,
         config=config,
     )
-    train_result = trainer.train()
+    train_kwargs = {}
+    if config.resume_from_checkpoint is not None:
+        train_kwargs["resume_from_checkpoint"] = str(config.resume_from_checkpoint)
+    train_result = trainer.train(**train_kwargs)
     metrics = dict(train_result.metrics)
     metrics.update(trainer.evaluate())
     trainer.save_model(config.output_dir)

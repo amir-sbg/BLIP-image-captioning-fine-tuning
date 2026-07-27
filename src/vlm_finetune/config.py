@@ -27,6 +27,7 @@ class FineTuneConfig:
     max_train_samples: int | None = 512
     max_validation_samples: int | None = 64
     max_new_tokens: int = 32
+    resume_from_checkpoint: Path | None = None
     seed: int = 42
 
     def __post_init__(self) -> None:
