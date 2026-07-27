@@ -53,10 +53,11 @@ After training, generate captions for local images:
 ```bash
 python -m vlm_finetune.infer \
   --model-dir artifacts/blip-captioner \
-  --image examples/photo-one.jpg examples/photo-two.jpg
+  --image examples/photo-one.jpg examples/photo-two.jpg \
+  --num-beams 3
 ```
 
-The command prints one JSON record per image with its path and generated caption. Use `--device cuda`, `--device mps`, or `--device cpu` to select a device explicitly; `auto` selects the first available accelerator.
+The command prints one JSON record per image with its path and generated caption. `--num-beams` controls deterministic beam-search width during generation. Use `--device cuda`, `--device mps`, or `--device cpu` to select a device explicitly; `auto` selects the first available accelerator.
 
 ## Outputs
 
