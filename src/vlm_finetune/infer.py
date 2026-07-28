@@ -46,7 +46,7 @@ def caption_files(
     num_beams: int = 3,
 ) -> list[dict[str, str]]:
     device = _select_device(device_name)
-    model, processor = load_blip(str(model_dir))
+    model, processor = load_blip(str(model_dir), device=device)
     images = []
     for path in image_paths:
         with Image.open(path) as image:
