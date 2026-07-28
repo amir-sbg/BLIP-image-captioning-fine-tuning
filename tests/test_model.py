@@ -19,12 +19,12 @@ def test_load_blip_places_inference_model_on_requested_device(monkeypatch) -> No
     monkeypatch.setattr(
         model_module.BlipProcessor,
         "from_pretrained",
-        lambda cls, name: object(),
+        lambda name: object(),
     )
     monkeypatch.setattr(
         model_module.BlipForConditionalGeneration,
         "from_pretrained",
-        lambda cls, name: fake_model,
+        lambda name: fake_model,
     )
 
     loaded_model, _ = model_module.load_blip("local-model", device="cpu")
