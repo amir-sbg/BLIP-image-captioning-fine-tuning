@@ -1,8 +1,14 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 
-from vlm_finetune.infer import build_parser, discover_image_paths
+from vlm_finetune.infer import (
+    build_parser,
+    discover_image_paths,
+    save_inference_results,
+)
 
 
 def test_inference_parser_reads_beam_count_as_an_integer(tmp_path) -> None:
@@ -36,3 +42,15 @@ def test_discover_image_paths_filters_and_sorts_files(tmp_path) -> None:
 def test_discover_image_paths_rejects_missing_directory(tmp_path) -> None:
     with pytest.raises(ValueError, match="not found"):
         discover_image_paths(tmp_path / "missing")
+
+
+def test_inference_results_can_be_saved_as_json(tmp_path) -> None:
+    output_path = tmp_path / "reports" / "captions.json"
+    save_inference_results(
+        [{"image": "photo.jpg", "caption": "a small house"}],
+        output_path,
+    )
+
+    assert json.loads(output_path.read_text()) == [
+        {"image": "photo.jpg", "caption": "a small house"}
+    ]

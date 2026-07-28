@@ -27,6 +27,14 @@ def discover_image_paths(image_dir: Path, recursive: bool = False) -> list[Path]
     )
 
 
+def save_inference_results(
+    results: list[dict[str, str]],
+    output_path: Path,
+) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(results, indent=2) + "\n")
+
+
 def _select_device(name: str) -> torch.device:
     if name != "auto":
         return torch.device(name)
@@ -77,6 +85,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--max-new-tokens", type=int, default=32)
     parser.add_argument("--num-beams", type=int, default=3)
+    parser.add_argument("--output", type=Path)
     return parser
 
 
@@ -91,16 +100,14 @@ if __name__ == "__main__":
             parser.error(str(error))
         if not image_paths:
             parser.error("no supported image files were found")
-    print(
-        json.dumps(
-            caption_files(
-                model_dir=args.model_dir,
-                image_paths=image_paths,
-                device_name=args.device,
-                batch_size=args.batch_size,
-                max_new_tokens=args.max_new_tokens,
-                num_beams=args.num_beams,
-            ),
-            indent=2,
-        )
+    results = caption_files(
+        model_dir=args.model_dir,
+        image_paths=image_paths,
+        device_name=args.device,
+        batch_size=args.batch_size,
+        max_new_tokens=args.max_new_tokens,
+        num_beams=args.num_beams,
     )
+    if args.output is not None:
+        save_inference_results(results, args.output)
+    print(json.dumps(results, indent=2))
