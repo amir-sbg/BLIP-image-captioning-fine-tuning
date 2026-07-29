@@ -9,7 +9,12 @@ from vlm_finetune.metrics import caption_metrics
 
 
 class TinyProcessor:
-    def __call__(self, images, return_tensors):
+    def __init__(self) -> None:
+        self.prompts = []
+
+    def __call__(self, images, return_tensors, text=None):
+        if text is not None:
+            self.prompts.extend(text)
         return {
             "pixel_values": torch.ones((len(images), 3, 2, 2)),
         }
@@ -46,6 +51,19 @@ def test_generation_rejects_invalid_beam_count() -> None:
             torch.device("cpu"),
             num_beams=0,
         )
+
+
+def test_generation_passes_prompt_to_processor() -> None:
+    processor = TinyProcessor()
+    generate_captions(
+        TinyModel(),
+        processor,
+        ["one", "two", "three"],
+        torch.device("cpu"),
+        batch_size=2,
+        prompt="a watercolor illustration",
+    )
+    assert processor.prompts == ["a watercolor illustration"] * 3
 
 
 def test_caption_metrics_include_token_overlap() -> None:

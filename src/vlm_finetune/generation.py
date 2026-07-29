@@ -19,6 +19,7 @@ def generate_captions(
     batch_size: int = 4,
     max_new_tokens: int = 32,
     num_beams: int = 3,
+    prompt: str | None = None,
 ) -> list[str]:
     if batch_size < 1:
         raise ValueError("batch_size must be at least 1")
@@ -26,6 +27,8 @@ def generate_captions(
         raise ValueError("max_new_tokens must be at least 1")
     if num_beams < 1:
         raise ValueError("num_beams must be at least 1")
+    if prompt is not None and not prompt.strip():
+        raise ValueError("prompt must not be empty")
     if not images:
         return []
 
@@ -33,10 +36,14 @@ def generate_captions(
     captions: list[str] = []
     with torch.inference_mode():
         for start in range(0, len(images), batch_size):
-            inputs = processor(
-                images=list(images[start : start + batch_size]),
-                return_tensors="pt",
-            )
+            batch_images = list(images[start : start + batch_size])
+            processor_kwargs = {
+                "images": batch_images,
+                "return_tensors": "pt",
+            }
+            if prompt is not None:
+                processor_kwargs["text"] = [prompt] * len(batch_images)
+            inputs = processor(**processor_kwargs)
             inputs = _move_to_device(inputs, device)
             generated_ids = model.generate(
                 **inputs,
