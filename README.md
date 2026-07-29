@@ -68,6 +68,17 @@ python -m vlm_finetune.infer \
 
 The command prints one JSON record per image with its path and generated caption. When `--output` is provided, it also writes the same records to a JSON file and creates the parent directory when needed. `--num-beams` controls deterministic beam-search width during generation. Use `--device cuda`, `--device mps`, or `--device cpu` to select a device explicitly; `auto` selects the first available accelerator.
 
+An optional prompt can be applied to every image when a particular caption style or prefix is useful:
+
+```bash
+python -m vlm_finetune.infer \
+  --model-dir artifacts/blip-captioner \
+  --image examples/photo-one.jpg \
+  --prompt "a watercolor illustration"
+```
+
+If `--prompt` is omitted, BLIP generates an unconstrained caption.
+
 For a folder of images, use `--image-dir`; add `--recursive` to include nested folders:
 
 ```bash
