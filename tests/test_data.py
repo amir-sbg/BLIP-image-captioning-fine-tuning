@@ -6,6 +6,7 @@ from datasets import Dataset
 
 from vlm_finetune.config import FineTuneConfig
 from vlm_finetune.data import (
+    normalize_caption,
     prepare_dataset,
     resolve_caption_column,
     validate_caption_dataset,
@@ -51,6 +52,15 @@ def test_prepare_dataset_masks_padding_tokens() -> None:
     assert set(prepared.column_names) == {"pixel_values", "input_ids", "labels"}
     assert prepared[0]["labels"] == [5, -100, -100]
     assert prepared[1]["labels"] == [6, 7, -100]
+
+
+def test_caption_text_is_normalized_before_encoding() -> None:
+    assert normalize_caption("  a   small\nobject  ") == "a small object"
+
+
+def test_empty_caption_text_is_rejected() -> None:
+    with pytest.raises(ValueError, match="caption text"):
+        normalize_caption("   ")
 
 
 def test_fine_tune_config_rejects_empty_dataset_name() -> None:

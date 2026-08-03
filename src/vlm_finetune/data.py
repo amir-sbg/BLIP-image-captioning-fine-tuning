@@ -6,6 +6,13 @@ from datasets import Dataset, DatasetDict, load_dataset
 DEFAULT_CAPTION_COLUMNS = ("caption", "text", "sentence")
 
 
+def normalize_caption(value) -> str:
+    caption = " ".join(str(value).split())
+    if not caption:
+        raise ValueError("caption text must not be empty")
+    return caption
+
+
 def resolve_caption_column(
     dataset: Dataset,
     requested: str | None = None,
@@ -88,7 +95,10 @@ def prepare_dataset(
             image.convert("RGB") if hasattr(image, "convert") else image
             for image in batch[image_column]
         ]
-        captions = [str(caption) for caption in batch[resolved_caption_column]]
+        captions = [
+            normalize_caption(caption)
+            for caption in batch[resolved_caption_column]
+        ]
         encoded = processor(
             images=images,
             text=captions,

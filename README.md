@@ -7,7 +7,7 @@ The default experiment uses the public `lambdalabs/pokemon-blip-captions` datase
 ## Pipeline
 
 1. Load an image-caption dataset and create a reproducible train/validation split.
-2. Convert images to RGB and tokenize captions with `BlipProcessor`.
+2. Convert images to RGB, normalize caption text, and tokenize captions with `BlipProcessor`.
 3. Mask padding tokens in the language-model labels so they do not contribute to the loss.
 4. Fine-tune `BlipForConditionalGeneration` with `Seq2SeqTrainer`, warmup, weight decay, and gradient accumulation.
 5. Generate captions for the validation images and report exact match and token-level F1.
