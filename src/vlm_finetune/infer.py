@@ -27,6 +27,14 @@ def discover_image_paths(image_dir: Path, recursive: bool = False) -> list[Path]
     )
 
 
+def limit_image_paths(image_paths: list[Path], limit: int | None) -> list[Path]:
+    if limit is None:
+        return image_paths
+    if limit < 1:
+        raise ValueError("limit must be at least 1")
+    return image_paths[:limit]
+
+
 def save_inference_results(
     results: list[dict[str, str]],
     output_path: Path,
@@ -83,6 +91,7 @@ def build_parser() -> argparse.ArgumentParser:
     image_inputs.add_argument("--image", type=Path, nargs="+")
     image_inputs.add_argument("--image-dir", type=Path)
     parser.add_argument("--recursive", action="store_true")
+    parser.add_argument("--limit", type=int)
     parser.add_argument("--device", default="auto")
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--max-new-tokens", type=int, default=32)
@@ -103,6 +112,10 @@ if __name__ == "__main__":
             parser.error(str(error))
         if not image_paths:
             parser.error("no supported image files were found")
+    try:
+        image_paths = limit_image_paths(image_paths, args.limit)
+    except ValueError as error:
+        parser.error(str(error))
     results = caption_files(
         model_dir=args.model_dir,
         image_paths=image_paths,

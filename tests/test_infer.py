@@ -7,6 +7,7 @@ import pytest
 from vlm_finetune.infer import (
     build_parser,
     discover_image_paths,
+    limit_image_paths,
     save_inference_results,
 )
 
@@ -57,6 +58,18 @@ def test_discover_image_paths_filters_and_sorts_files(tmp_path) -> None:
 def test_discover_image_paths_rejects_missing_directory(tmp_path) -> None:
     with pytest.raises(ValueError, match="not found"):
         discover_image_paths(tmp_path / "missing")
+
+
+def test_limit_image_paths_keeps_original_order(tmp_path) -> None:
+    paths = [tmp_path / "a.jpg", tmp_path / "b.jpg", tmp_path / "c.jpg"]
+
+    assert limit_image_paths(paths, 2) == paths[:2]
+    assert limit_image_paths(paths, None) == paths
+
+
+def test_limit_image_paths_rejects_non_positive_limit(tmp_path) -> None:
+    with pytest.raises(ValueError, match="limit"):
+        limit_image_paths([tmp_path / "a.jpg"], 0)
 
 
 def test_inference_results_can_be_saved_as_json(tmp_path) -> None:

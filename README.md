@@ -85,7 +85,8 @@ For a folder of images, use `--image-dir`; add `--recursive` to include nested f
 python -m vlm_finetune.infer \
   --model-dir artifacts/blip-captioner \
   --image-dir examples \
-  --recursive
+  --recursive \
+  --limit 25
 ```
 
 ## Outputs
