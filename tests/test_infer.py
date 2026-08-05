@@ -26,6 +26,21 @@ def test_inference_parser_reads_beam_count_as_an_integer(tmp_path) -> None:
     assert args.num_beams == 5
 
 
+def test_inference_parser_reads_repetition_penalty(tmp_path) -> None:
+    args = build_parser().parse_args(
+        [
+            "--model-dir",
+            str(tmp_path / "model"),
+            "--image",
+            str(tmp_path / "image.jpg"),
+            "--repetition-penalty",
+            "1.15",
+        ]
+    )
+
+    assert args.repetition_penalty == 1.15
+
+
 def test_inference_parser_accepts_a_caption_prompt(tmp_path) -> None:
     args = build_parser().parse_args(
         [

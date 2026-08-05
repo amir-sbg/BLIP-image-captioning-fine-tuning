@@ -19,6 +19,7 @@ def generate_captions(
     batch_size: int = 4,
     max_new_tokens: int = 32,
     num_beams: int = 3,
+    repetition_penalty: float = 1.0,
     prompt: str | None = None,
 ) -> list[str]:
     if batch_size < 1:
@@ -27,6 +28,8 @@ def generate_captions(
         raise ValueError("max_new_tokens must be at least 1")
     if num_beams < 1:
         raise ValueError("num_beams must be at least 1")
+    if repetition_penalty < 1.0:
+        raise ValueError("repetition_penalty must be at least 1.0")
     if prompt is not None and not prompt.strip():
         raise ValueError("prompt must not be empty")
     if not images:
@@ -49,6 +52,7 @@ def generate_captions(
                 **inputs,
                 max_new_tokens=max_new_tokens,
                 num_beams=num_beams,
+                repetition_penalty=repetition_penalty,
             )
             captions.extend(
                 caption.strip()

@@ -60,6 +60,7 @@ def caption_files(
     batch_size: int = 4,
     max_new_tokens: int = 32,
     num_beams: int = 3,
+    repetition_penalty: float = 1.0,
     prompt: str | None = None,
 ) -> list[dict[str, str]]:
     device = _select_device(device_name)
@@ -76,6 +77,7 @@ def caption_files(
         batch_size=batch_size,
         max_new_tokens=max_new_tokens,
         num_beams=num_beams,
+        repetition_penalty=repetition_penalty,
         prompt=prompt,
     )
     return [
@@ -96,6 +98,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--max-new-tokens", type=int, default=32)
     parser.add_argument("--num-beams", type=int, default=3)
+    parser.add_argument("--repetition-penalty", type=float, default=1.0)
     parser.add_argument("--prompt", help="optional text prompt passed to BLIP for every image")
     parser.add_argument("--output", type=Path)
     return parser
@@ -123,6 +126,7 @@ if __name__ == "__main__":
         batch_size=args.batch_size,
         max_new_tokens=args.max_new_tokens,
         num_beams=args.num_beams,
+        repetition_penalty=args.repetition_penalty,
         prompt=args.prompt,
     )
     if args.output is not None:
