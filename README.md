@@ -64,10 +64,11 @@ python -m vlm_finetune.infer \
   --image examples/photo-one.jpg examples/photo-two.jpg \
   --num-beams 3 \
   --repetition-penalty 1.1 \
-  --output reports/inference.json
+  --output reports/inference.json \
+  --csv-output reports/inference.csv
 ```
 
-The command prints one JSON record per image with its path and generated caption. When `--output` is provided, it also writes the same records to a JSON file and creates the parent directory when needed. `--num-beams` controls deterministic beam-search width during generation, and `--repetition-penalty` can discourage repeated phrases. Use `--device cuda`, `--device mps`, or `--device cpu` to select a device explicitly; `auto` selects the first available accelerator.
+The command prints one JSON record per image with its path and generated caption. When `--output` is provided, it also writes the same records to a JSON file; `--csv-output` writes a simple two-column review file. `--num-beams` controls deterministic beam-search width during generation, and `--repetition-penalty` can discourage repeated phrases. Use `--device cuda`, `--device mps`, or `--device cpu` to select a device explicitly; `auto` selects the first available accelerator.
 
 An optional prompt can be applied to every image when a particular caption style or prefix is useful:
 
@@ -96,7 +97,7 @@ python -m vlm_finetune.infer \
 - `reports/run_config.json` records the experiment settings.
 - `reports/metrics.json` contains training metrics and validation caption metrics.
 - `reports/caption_predictions.json` stores validation references and generated captions for review.
-- `reports/inference.json` is an optional JSON export from local-image inference.
+- `reports/inference.json` and `reports/inference.csv` are optional exports from local-image inference.
 - `artifacts/blip-captioner/run_results.json` is the raw metrics file written by the Trainer.
 
 ## Project layout

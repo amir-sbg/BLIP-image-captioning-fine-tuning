@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 from pathlib import Path
 
@@ -41,6 +42,17 @@ def save_inference_results(
 ) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(results, indent=2) + "\n")
+
+
+def save_inference_csv(
+    results: list[dict[str, str]],
+    output_path: Path,
+) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=["image", "caption"])
+        writer.writeheader()
+        writer.writerows(results)
 
 
 def _select_device(name: str) -> torch.device:
@@ -101,6 +113,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--repetition-penalty", type=float, default=1.0)
     parser.add_argument("--prompt", help="optional text prompt passed to BLIP for every image")
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--csv-output", type=Path)
     return parser
 
 
@@ -131,4 +144,6 @@ if __name__ == "__main__":
     )
     if args.output is not None:
         save_inference_results(results, args.output)
+    if args.csv_output is not None:
+        save_inference_csv(results, args.csv_output)
     print(json.dumps(results, indent=2))

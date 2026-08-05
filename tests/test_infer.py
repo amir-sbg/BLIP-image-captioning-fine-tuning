@@ -8,6 +8,7 @@ from vlm_finetune.infer import (
     build_parser,
     discover_image_paths,
     limit_image_paths,
+    save_inference_csv,
     save_inference_results,
 )
 
@@ -96,4 +97,17 @@ def test_inference_results_can_be_saved_as_json(tmp_path) -> None:
 
     assert json.loads(output_path.read_text()) == [
         {"image": "photo.jpg", "caption": "a small house"}
+    ]
+
+
+def test_inference_results_can_be_saved_as_csv(tmp_path) -> None:
+    output_path = tmp_path / "reports" / "captions.csv"
+    save_inference_csv(
+        [{"image": "photo.jpg", "caption": "a small house"}],
+        output_path,
+    )
+
+    assert output_path.read_text().splitlines() == [
+        "image,caption",
+        "photo.jpg,a small house",
     ]
