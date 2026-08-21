@@ -9,6 +9,7 @@ from vlm_finetune.data import (
     normalize_caption,
     prepare_dataset,
     resolve_caption_column,
+    split_caption_dataset,
     validate_caption_dataset,
 )
 
@@ -52,6 +53,26 @@ def test_prepare_dataset_masks_padding_tokens() -> None:
     assert set(prepared.column_names) == {"pixel_values", "input_ids", "labels"}
     assert prepared[0]["labels"] == [5, -100, -100]
     assert prepared[1]["labels"] == [6, 7, -100]
+
+
+def test_sample_limits_are_applied_after_the_split() -> None:
+    dataset = Dataset.from_dict(
+        {
+            "image": [f"image-{index}" for index in range(20)],
+            "text": [f"caption {index}" for index in range(20)],
+        }
+    )
+
+    split = split_caption_dataset(
+        dataset,
+        validation_size=0.25,
+        seed=7,
+        max_train_samples=4,
+        max_validation_samples=3,
+    )
+
+    assert len(split["train"]) == 4
+    assert len(split["validation"]) == 3
 
 
 def test_caption_text_is_normalized_before_encoding() -> None:

@@ -46,6 +46,30 @@ def _limit_dataset(dataset: Dataset, limit: int | None) -> Dataset:
     return dataset.select(range(min(limit, len(dataset))))
 
 
+def split_caption_dataset(
+    dataset: Dataset,
+    validation_size: float,
+    seed: int,
+    max_train_samples: int | None = None,
+    max_validation_samples: int | None = None,
+) -> DatasetDict:
+    if len(dataset) < 2:
+        raise ValueError("at least two image-caption examples are required")
+
+    split_dataset = dataset.train_test_split(
+        test_size=validation_size,
+        seed=seed,
+    )
+    return DatasetDict(
+        {
+            "train": _limit_dataset(split_dataset["train"], max_train_samples),
+            "validation": _limit_dataset(
+                split_dataset["test"], max_validation_samples
+            ),
+        }
+    )
+
+
 def load_caption_dataset(
     dataset_name: str,
     split: str = "train",
@@ -58,21 +82,12 @@ def load_caption_dataset(
 ) -> DatasetDict:
     dataset = load_dataset(dataset_name, split=split)
     validate_caption_dataset(dataset, image_column, caption_column)
-    dataset = _limit_dataset(dataset, max_train_samples)
-    if len(dataset) < 2:
-        raise ValueError("at least two image-caption examples are required")
-
-    split_dataset = dataset.train_test_split(
-        test_size=validation_size,
+    return split_caption_dataset(
+        dataset=dataset,
+        validation_size=validation_size,
         seed=seed,
-    )
-    return DatasetDict(
-        {
-            "train": split_dataset["train"],
-            "validation": _limit_dataset(
-                split_dataset["test"], max_validation_samples
-            ),
-        }
+        max_train_samples=max_train_samples,
+        max_validation_samples=max_validation_samples,
     )
 
 
