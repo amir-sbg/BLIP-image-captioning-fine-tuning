@@ -21,6 +21,34 @@ def _token_f1(reference: str, prediction: str) -> float:
     return 2 * precision * recall / (precision + recall)
 
 
+def _mean(values: list[int]) -> float:
+    return sum(values) / len(values) if values else 0.0
+
+
+def caption_diagnostics(
+    references: list[str],
+    predictions: list[str],
+) -> dict[str, float | int]:
+    if len(references) != len(predictions):
+        raise ValueError("references and predictions must have the same length")
+
+    reference_lengths = [len(_tokens(caption)) for caption in references]
+    prediction_lengths = [len(_tokens(caption)) for caption in predictions]
+    reference_mean = _mean(reference_lengths)
+    prediction_mean = _mean(prediction_lengths)
+    empty_predictions = sum(length == 0 for length in prediction_lengths)
+
+    return {
+        "reference_mean_tokens": reference_mean,
+        "prediction_mean_tokens": prediction_mean,
+        "prediction_to_reference_length": (
+            prediction_mean / reference_mean if reference_mean else 0.0
+        ),
+        "empty_prediction_rate": empty_predictions / len(predictions) if predictions else 0.0,
+        "empty_predictions": empty_predictions,
+    }
+
+
 def caption_metrics(
     references: list[str],
     predictions: list[str],
@@ -42,4 +70,5 @@ def caption_metrics(
         "n_examples": len(references),
         "exact_match": exact_matches / len(references),
         "token_f1": token_f1,
+        **caption_diagnostics(references, predictions),
     }

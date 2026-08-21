@@ -5,7 +5,7 @@ import torch
 
 from vlm_finetune.evaluate import save_caption_predictions
 from vlm_finetune.generation import generate_captions
-from vlm_finetune.metrics import caption_metrics
+from vlm_finetune.metrics import caption_diagnostics, caption_metrics
 
 
 class TinyProcessor:
@@ -102,11 +102,24 @@ def test_caption_metrics_include_token_overlap() -> None:
     assert metrics["n_examples"] == 2
     assert 0 < metrics["token_f1"] < 1
     assert metrics["exact_match"] == 0
+    assert metrics["reference_mean_tokens"] == 3
+    assert metrics["prediction_mean_tokens"] == 2.5
 
 
 def test_caption_metrics_reject_length_mismatch() -> None:
     with pytest.raises(ValueError, match="same length"):
         caption_metrics(["one"], [])
+
+
+def test_caption_diagnostics_tracks_empty_predictions() -> None:
+    diagnostics = caption_diagnostics(
+        ["a small red bird", "a beach photo"],
+        ["", "beach photo"],
+    )
+
+    assert diagnostics["empty_predictions"] == 1
+    assert diagnostics["empty_prediction_rate"] == 0.5
+    assert diagnostics["prediction_to_reference_length"] == pytest.approx(2 / 7)
 
 
 def test_caption_predictions_are_saved_for_review(tmp_path) -> None:
