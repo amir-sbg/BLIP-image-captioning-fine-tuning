@@ -25,6 +25,35 @@ def _mean(values: list[int]) -> float:
     return sum(values) / len(values) if values else 0.0
 
 
+def _ngrams(tokens: list[str], n: int) -> list[tuple[str, ...]]:
+    if n < 1:
+        raise ValueError("n must be at least 1")
+    if len(tokens) < n:
+        return []
+    return [tuple(tokens[index : index + n]) for index in range(len(tokens) - n + 1)]
+
+
+def _distinct_ngram_ratio(captions: list[str], n: int) -> float:
+    all_ngrams = [
+        ngram
+        for caption in captions
+        for ngram in _ngrams(_tokens(caption), n)
+    ]
+    if not all_ngrams:
+        return 0.0
+    return len(set(all_ngrams)) / len(all_ngrams)
+
+
+def _repeated_ngram_rate(captions: list[str], n: int) -> float:
+    repeated = 0
+    total = 0
+    for caption in captions:
+        grams = _ngrams(_tokens(caption), n)
+        total += len(grams)
+        repeated += len(grams) - len(set(grams))
+    return repeated / total if total else 0.0
+
+
 def caption_diagnostics(
     references: list[str],
     predictions: list[str],
@@ -44,6 +73,10 @@ def caption_diagnostics(
         "prediction_to_reference_length": (
             prediction_mean / reference_mean if reference_mean else 0.0
         ),
+        "prediction_distinct_unigrams": _distinct_ngram_ratio(predictions, 1),
+        "prediction_distinct_bigrams": _distinct_ngram_ratio(predictions, 2),
+        "prediction_repeated_bigram_rate": _repeated_ngram_rate(predictions, 2),
+        "reference_distinct_bigrams": _distinct_ngram_ratio(references, 2),
         "empty_prediction_rate": empty_predictions / len(predictions) if predictions else 0.0,
         "empty_predictions": empty_predictions,
     }

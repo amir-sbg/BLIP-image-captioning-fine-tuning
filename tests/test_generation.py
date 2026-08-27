@@ -122,6 +122,17 @@ def test_caption_diagnostics_tracks_empty_predictions() -> None:
     assert diagnostics["prediction_to_reference_length"] == pytest.approx(2 / 7)
 
 
+def test_caption_diagnostics_reports_diversity_and_repetition() -> None:
+    diagnostics = caption_diagnostics(
+        ["red bird on branch", "blue fish in water"],
+        ["red red red bird", "red red red bird"],
+    )
+
+    assert diagnostics["prediction_distinct_unigrams"] < 1.0
+    assert diagnostics["prediction_distinct_bigrams"] < diagnostics["reference_distinct_bigrams"]
+    assert diagnostics["prediction_repeated_bigram_rate"] > 0.0
+
+
 def test_caption_predictions_are_saved_for_review(tmp_path) -> None:
     output_path = tmp_path / "reports" / "caption_predictions.json"
     save_caption_predictions(
