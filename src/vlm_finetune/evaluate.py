@@ -40,6 +40,8 @@ def evaluate_captions(
     caption_column: str | None = None,
     batch_size: int = 4,
     max_new_tokens: int = 32,
+    num_beams: int = 3,
+    repetition_penalty: float = 1.0,
     predictions_path: Path | None = None,
 ) -> dict[str, float | int]:
     if image_column not in dataset.column_names:
@@ -53,6 +55,8 @@ def evaluate_captions(
         device=device,
         batch_size=batch_size,
         max_new_tokens=max_new_tokens,
+        num_beams=num_beams,
+        repetition_penalty=repetition_penalty,
     )
     if predictions_path is not None:
         save_caption_predictions(references, predictions, predictions_path)

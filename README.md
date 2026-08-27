@@ -41,6 +41,8 @@ python -m vlm_finetune.train \
   --max-train-samples 32 \
   --max-validation-samples 8 \
   --epochs 1 \
+  --eval-num-beams 3 \
+  --eval-repetition-penalty 1.1 \
   --output-dir artifacts/smoke-run \
   --report-dir reports/smoke-run
 ```
@@ -52,7 +54,7 @@ python -m vlm_finetune.train \
   --resume-from-checkpoint artifacts/blip-captioner/checkpoint-100
 ```
 
-The default configuration uses a maximum caption length of 64 tokens, batch size 4, learning rate `5e-5`, and one epoch. These are starting points for a small experiment, not fixed assumptions about every dataset.
+The default configuration uses a maximum caption length of 64 tokens, batch size 4, learning rate `5e-5`, and one epoch. Validation generation uses beam search by default, and `--eval-num-beams` plus `--eval-repetition-penalty` let the reported caption metrics match the decoding policy you want to inspect. These are starting points for a small experiment, not fixed assumptions about every dataset.
 
 ## Inference
 

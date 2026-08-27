@@ -26,11 +26,13 @@ class TinyProcessor:
 class TinyModel:
     def __init__(self) -> None:
         self.repetition_penalty = None
+        self.num_beams = None
 
     def eval(self):
         return self
 
     def generate(self, pixel_values, max_new_tokens, num_beams, repetition_penalty):
+        self.num_beams = num_beams
         self.repetition_penalty = repetition_penalty
         return torch.zeros((len(pixel_values), 3), dtype=torch.long)
 
@@ -79,6 +81,19 @@ def test_generation_passes_repetition_penalty_to_model() -> None:
     )
 
     assert model.repetition_penalty == 1.2
+
+
+def test_generation_passes_beam_count_to_model() -> None:
+    model = TinyModel()
+    generate_captions(
+        model,
+        TinyProcessor(),
+        ["one"],
+        torch.device("cpu"),
+        num_beams=4,
+    )
+
+    assert model.num_beams == 4
 
 
 def test_generation_passes_prompt_to_processor() -> None:

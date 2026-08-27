@@ -27,6 +27,8 @@ class FineTuneConfig:
     max_train_samples: int | None = 512
     max_validation_samples: int | None = 64
     max_new_tokens: int = 32
+    eval_num_beams: int = 3
+    eval_repetition_penalty: float = 1.0
     resume_from_checkpoint: Path | None = None
     seed: int = 42
 
@@ -63,6 +65,10 @@ class FineTuneConfig:
                 raise ValueError(f"{name} must be at least 1")
         if self.max_new_tokens < 1:
             raise ValueError("max_new_tokens must be at least 1")
+        if self.eval_num_beams < 1:
+            raise ValueError("eval_num_beams must be at least 1")
+        if self.eval_repetition_penalty < 1.0:
+            raise ValueError("eval_repetition_penalty must be at least 1.0")
 
 
 def prepare_output_directories(config: FineTuneConfig) -> None:

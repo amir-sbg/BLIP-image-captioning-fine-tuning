@@ -68,6 +68,8 @@ def run(config: FineTuneConfig) -> dict:
         caption_column=config.caption_column,
         batch_size=config.eval_batch_size,
         max_new_tokens=config.max_new_tokens,
+        num_beams=config.eval_num_beams,
+        repetition_penalty=config.eval_repetition_penalty,
         predictions_path=config.report_dir / "caption_predictions.json",
     )
     _write_json(metrics, config.report_dir / "metrics.json")
@@ -99,6 +101,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-train-samples", type=int, default=512)
     parser.add_argument("--max-validation-samples", type=int, default=64)
     parser.add_argument("--max-new-tokens", type=int, default=32)
+    parser.add_argument("--eval-num-beams", type=int, default=3)
+    parser.add_argument("--eval-repetition-penalty", type=float, default=1.0)
     parser.add_argument("--resume-from-checkpoint", type=Path)
     parser.add_argument("--seed", type=int, default=42)
     return parser

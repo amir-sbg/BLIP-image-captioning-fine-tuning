@@ -87,3 +87,10 @@ def test_empty_caption_text_is_rejected() -> None:
 def test_fine_tune_config_rejects_empty_dataset_name() -> None:
     with pytest.raises(ValueError, match="dataset name"):
         FineTuneConfig(dataset_name=" ")
+
+
+def test_fine_tune_config_validates_eval_decoding() -> None:
+    with pytest.raises(ValueError, match="eval_num_beams"):
+        FineTuneConfig(eval_num_beams=0)
+    with pytest.raises(ValueError, match="eval_repetition_penalty"):
+        FineTuneConfig(eval_repetition_penalty=0.8)
