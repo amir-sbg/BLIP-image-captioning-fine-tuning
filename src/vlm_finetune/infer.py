@@ -37,7 +37,7 @@ def limit_image_paths(image_paths: list[Path], limit: int | None) -> list[Path]:
 
 
 def save_inference_results(
-    results: list[dict[str, str]],
+    results: object,
     output_path: Path,
 ) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -53,6 +53,32 @@ def save_inference_csv(
         writer = csv.DictWriter(handle, fieldnames=["image", "caption"])
         writer.writeheader()
         writer.writerows(results)
+
+
+def build_inference_manifest(
+    model_dir: Path,
+    image_paths: list[Path],
+    device_name: str,
+    batch_size: int,
+    max_new_tokens: int,
+    num_beams: int,
+    repetition_penalty: float,
+    prompt: str | None,
+) -> dict:
+    return {
+        "model_dir": str(model_dir),
+        "images": [str(path) for path in image_paths],
+        "image_count": len(image_paths),
+        "image_extensions": sorted({path.suffix.lower() for path in image_paths}),
+        "device": device_name,
+        "batch_size": batch_size,
+        "decoding": {
+            "max_new_tokens": max_new_tokens,
+            "num_beams": num_beams,
+            "repetition_penalty": repetition_penalty,
+            "prompt": prompt,
+        },
+    }
 
 
 def _select_device(name: str) -> torch.device:
@@ -114,6 +140,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--prompt", help="optional text prompt passed to BLIP for every image")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--csv-output", type=Path)
+    parser.add_argument("--manifest-output", type=Path)
     return parser
 
 
@@ -146,4 +173,18 @@ if __name__ == "__main__":
         save_inference_results(results, args.output)
     if args.csv_output is not None:
         save_inference_csv(results, args.csv_output)
+    if args.manifest_output is not None:
+        save_inference_results(
+            build_inference_manifest(
+                model_dir=args.model_dir,
+                image_paths=image_paths,
+                device_name=args.device,
+                batch_size=args.batch_size,
+                max_new_tokens=args.max_new_tokens,
+                num_beams=args.num_beams,
+                repetition_penalty=args.repetition_penalty,
+                prompt=args.prompt,
+            ),
+            args.manifest_output,
+        )
     print(json.dumps(results, indent=2))
