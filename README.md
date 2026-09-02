@@ -7,12 +7,13 @@ The default experiment uses the public `lambdalabs/pokemon-blip-captions` datase
 ## Pipeline
 
 1. Load an image-caption dataset and create a reproducible train/validation split.
-2. Convert images to RGB, normalize caption text, and tokenize captions with `BlipProcessor`.
-3. Mask padding tokens in the language-model labels so they do not contribute to the loss.
-4. Fine-tune `BlipForConditionalGeneration` with `Seq2SeqTrainer`, warmup, weight decay, and gradient accumulation.
-5. Generate captions for the validation images and report exact match, token-level F1, length, diversity, repetition, and empty-output diagnostics.
-6. Save per-example references and predictions for qualitative error analysis.
-7. Save the trained model and processor for local image captioning.
+2. Write a small dataset profile with split size, caption lengths, and empty-caption counts.
+3. Convert images to RGB, normalize caption text, and tokenize captions with `BlipProcessor`.
+4. Mask padding tokens in the language-model labels so they do not contribute to the loss.
+5. Fine-tune `BlipForConditionalGeneration` with `Seq2SeqTrainer`, warmup, weight decay, and gradient accumulation.
+6. Generate captions for the validation images and report exact match, token-level F1, length, diversity, repetition, and empty-output diagnostics.
+7. Save per-example references and predictions for qualitative error analysis.
+8. Save the trained model and processor for local image captioning.
 
 ## Setup
 
@@ -97,6 +98,7 @@ python -m vlm_finetune.infer \
 
 - `artifacts/blip-captioner/` contains the fine-tuned model, processor, and Trainer checkpoints.
 - `reports/run_config.json` records the experiment settings.
+- `reports/data_profile.json` summarizes the train/validation caption splits before tokenization.
 - `reports/metrics.json` contains training metrics, validation caption metrics, and generation diagnostics such as output length, distinct n-grams, repetition, and empty-output rate.
 - `reports/caption_predictions.json` stores validation references and generated captions for review.
 - `reports/inference.json` and `reports/inference.csv` are optional exports from local-image inference.
@@ -107,7 +109,7 @@ python -m vlm_finetune.infer \
 ```text
 src/vlm_finetune/
 ├── config.py       experiment settings and validation
-├── data.py         dataset loading and processor preparation
+├── data.py         dataset loading, profiling, and processor preparation
 ├── model.py        BLIP model and processor loading
 ├── training.py     Hugging Face Trainer configuration
 ├── train.py        end-to-end fine-tuning command

@@ -6,6 +6,7 @@ from datasets import Dataset
 
 from vlm_finetune.config import FineTuneConfig
 from vlm_finetune.data import (
+    caption_dataset_profile,
     normalize_caption,
     prepare_dataset,
     resolve_caption_column,
@@ -40,6 +41,16 @@ def tiny_dataset() -> Dataset:
 def test_caption_column_is_inferred() -> None:
     assert resolve_caption_column(tiny_dataset()) == "text"
     assert validate_caption_dataset(tiny_dataset()) == "text"
+
+
+def test_caption_dataset_profile_summarizes_split() -> None:
+    profile = caption_dataset_profile(tiny_dataset())
+
+    assert profile["rows"] == 2
+    assert profile["caption_column"] == "text"
+    assert profile["min_caption_tokens"] == 1
+    assert profile["mean_caption_tokens"] == 1.5
+    assert profile["max_caption_tokens"] == 2
 
 
 def test_missing_image_column_is_explicit() -> None:

@@ -8,7 +8,7 @@ from pathlib import Path
 from datasets import DatasetDict
 
 from .config import FineTuneConfig, prepare_output_directories
-from .data import load_caption_dataset, prepare_dataset
+from .data import caption_dataset_profile, load_caption_dataset, prepare_dataset
 from .evaluate import evaluate_captions
 from .model import load_blip
 from .training import run_training
@@ -39,6 +39,15 @@ def run(config: FineTuneConfig) -> dict:
         max_train_samples=config.max_train_samples,
         max_validation_samples=config.max_validation_samples,
     )
+    data_profile = {
+        split: caption_dataset_profile(
+            dataset,
+            image_column=config.image_column,
+            caption_column=config.caption_column,
+        )
+        for split, dataset in raw_dataset.items()
+    }
+    _write_json(data_profile, config.report_dir / "data_profile.json")
     model, processor = load_blip(config.model_name)
     tokenized_dataset = DatasetDict(
         {

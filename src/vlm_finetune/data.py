@@ -40,6 +40,33 @@ def validate_caption_dataset(
     return resolve_caption_column(dataset, caption_column)
 
 
+def caption_dataset_profile(
+    dataset: Dataset,
+    image_column: str = "image",
+    caption_column: str | None = None,
+) -> dict[str, float | int | str]:
+    resolved_caption_column = validate_caption_dataset(
+        dataset,
+        image_column=image_column,
+        caption_column=caption_column,
+    )
+    captions = [" ".join(str(value or "").split()) for value in dataset[resolved_caption_column]]
+    lengths = [len(caption.split()) for caption in captions]
+    empty_captions = sum(length == 0 for length in lengths)
+    image_values = dataset[image_column]
+    pil_like_images = sum(1 for image in image_values if hasattr(image, "size"))
+    return {
+        "rows": len(dataset),
+        "image_column": image_column,
+        "caption_column": resolved_caption_column,
+        "empty_captions": empty_captions,
+        "min_caption_tokens": min(lengths) if lengths else 0,
+        "mean_caption_tokens": round(sum(lengths) / len(lengths), 3) if lengths else 0.0,
+        "max_caption_tokens": max(lengths) if lengths else 0,
+        "pil_like_images": pil_like_images,
+    }
+
+
 def _limit_dataset(dataset: Dataset, limit: int | None) -> Dataset:
     if limit is None:
         return dataset
