@@ -11,7 +11,7 @@ The default experiment uses the public `lambdalabs/pokemon-blip-captions` datase
 3. Convert images to RGB, normalize caption text, and tokenize captions with `BlipProcessor`.
 4. Mask padding tokens in the language-model labels so they do not contribute to the loss.
 5. Fine-tune `BlipForConditionalGeneration` with `Seq2SeqTrainer`, warmup, weight decay, and gradient accumulation.
-6. Generate captions for the validation images and report exact match, token-level F1, length, diversity, repetition, and empty-output diagnostics.
+6. Generate captions for the validation images and report exact match, token-level F1, length, diversity, reference-token coverage, novel-token rate, repetition, and empty-output diagnostics.
 7. Save per-example references and predictions for qualitative error analysis.
 8. Save the trained model and processor for local image captioning.
 
@@ -99,7 +99,7 @@ python -m vlm_finetune.infer \
 - `artifacts/blip-captioner/` contains the fine-tuned model, processor, and Trainer checkpoints.
 - `reports/run_config.json` records the experiment settings.
 - `reports/data_profile.json` summarizes the train/validation caption splits before tokenization.
-- `reports/metrics.json` contains training metrics, validation caption metrics, and generation diagnostics such as output length, distinct n-grams, repetition, and empty-output rate.
+- `reports/metrics.json` contains training metrics, validation caption metrics, and generation diagnostics such as output length, distinct n-grams, reference-token coverage, novel-token rate, repetition, and empty-output rate.
 - `reports/caption_predictions.json` stores validation references and generated captions for review.
 - `reports/inference.json` and `reports/inference.csv` are optional exports from local-image inference.
 - `artifacts/blip-captioner/run_results.json` is the raw metrics file written by the Trainer.

@@ -5,7 +5,12 @@ import torch
 
 from vlm_finetune.evaluate import save_caption_predictions
 from vlm_finetune.generation import generate_captions
-from vlm_finetune.metrics import caption_diagnostics, caption_metrics
+from vlm_finetune.metrics import (
+    caption_diagnostics,
+    caption_metrics,
+    novel_prediction_token_rate,
+    reference_token_coverage,
+)
 
 
 class TinyProcessor:
@@ -146,6 +151,18 @@ def test_caption_diagnostics_reports_diversity_and_repetition() -> None:
     assert diagnostics["prediction_distinct_unigrams"] < 1.0
     assert diagnostics["prediction_distinct_bigrams"] < diagnostics["reference_distinct_bigrams"]
     assert diagnostics["prediction_repeated_bigram_rate"] > 0.0
+
+
+def test_caption_metrics_report_reference_coverage_and_novel_tokens() -> None:
+    references = ["red bird on branch", "blue fish in water"]
+    predictions = ["red bird on branch", "purple robot"]
+
+    assert reference_token_coverage(references, predictions) == pytest.approx(4 / 8)
+    assert novel_prediction_token_rate(references, predictions) == pytest.approx(2 / 6)
+
+    diagnostics = caption_diagnostics(references, predictions)
+    assert diagnostics["reference_token_coverage"] == pytest.approx(4 / 8)
+    assert diagnostics["novel_prediction_token_rate"] == pytest.approx(2 / 6)
 
 
 def test_caption_predictions_are_saved_for_review(tmp_path) -> None:

@@ -54,6 +54,27 @@ def _repeated_ngram_rate(captions: list[str], n: int) -> float:
     return repeated / total if total else 0.0
 
 
+def _vocabulary(captions: list[str]) -> set[str]:
+    return {token for caption in captions for token in _tokens(caption)}
+
+
+def reference_token_coverage(references: list[str], predictions: list[str]) -> float:
+    reference_vocab = _vocabulary(references)
+    if not reference_vocab:
+        return 0.0
+    prediction_vocab = _vocabulary(predictions)
+    return len(reference_vocab & prediction_vocab) / len(reference_vocab)
+
+
+def novel_prediction_token_rate(references: list[str], predictions: list[str]) -> float:
+    reference_vocab = _vocabulary(references)
+    prediction_tokens = [token for caption in predictions for token in _tokens(caption)]
+    if not prediction_tokens:
+        return 0.0
+    novel = sum(1 for token in prediction_tokens if token not in reference_vocab)
+    return novel / len(prediction_tokens)
+
+
 def caption_diagnostics(
     references: list[str],
     predictions: list[str],
@@ -76,6 +97,11 @@ def caption_diagnostics(
         "prediction_distinct_unigrams": _distinct_ngram_ratio(predictions, 1),
         "prediction_distinct_bigrams": _distinct_ngram_ratio(predictions, 2),
         "prediction_repeated_bigram_rate": _repeated_ngram_rate(predictions, 2),
+        "reference_token_coverage": reference_token_coverage(references, predictions),
+        "novel_prediction_token_rate": novel_prediction_token_rate(
+            references,
+            predictions,
+        ),
         "reference_distinct_bigrams": _distinct_ngram_ratio(references, 2),
         "empty_prediction_rate": empty_predictions / len(predictions) if predictions else 0.0,
         "empty_predictions": empty_predictions,
