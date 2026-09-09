@@ -12,7 +12,7 @@ The default experiment uses the public `lambdalabs/pokemon-blip-captions` datase
 4. Mask padding tokens in the language-model labels so they do not contribute to the loss.
 5. Fine-tune `BlipForConditionalGeneration` with `Seq2SeqTrainer`, warmup, weight decay, and gradient accumulation.
 6. Generate captions for the validation images and report exact match, token-level F1, length, diversity, reference-token coverage, novel-token rate, repetition, and empty-output diagnostics.
-7. Save per-example references and predictions for qualitative error analysis.
+7. Save per-example references, predictions, token F1, and length deltas for qualitative error analysis.
 8. Save the trained model and processor for local image captioning.
 
 ## Setup
@@ -42,8 +42,10 @@ python -m vlm_finetune.train \
   --max-train-samples 32 \
   --max-validation-samples 8 \
   --epochs 1 \
+  --eval-min-new-tokens 4 \
   --eval-num-beams 3 \
   --eval-repetition-penalty 1.1 \
+  --eval-no-repeat-ngram-size 3 \
   --output-dir artifacts/smoke-run \
   --report-dir reports/smoke-run
 ```
@@ -55,7 +57,7 @@ python -m vlm_finetune.train \
   --resume-from-checkpoint artifacts/blip-captioner/checkpoint-100
 ```
 
-The default configuration uses a maximum caption length of 64 tokens, batch size 4, learning rate `5e-5`, and one epoch. Validation generation uses beam search by default, and `--eval-num-beams` plus `--eval-repetition-penalty` let the reported caption metrics match the decoding policy you want to inspect. These are starting points for a small experiment, not fixed assumptions about every dataset.
+The default configuration uses a maximum caption length of 64 tokens, batch size 4, learning rate `5e-5`, and one epoch. Validation generation uses beam search by default. `--eval-min-new-tokens`, `--eval-num-beams`, `--eval-repetition-penalty`, and `--eval-no-repeat-ngram-size` make the reported caption metrics match the decoding policy you want to inspect. These are starting points for a small experiment, not fixed assumptions about every dataset.
 
 ## Inference
 
@@ -65,8 +67,10 @@ After training, generate captions for local images:
 python -m vlm_finetune.infer \
   --model-dir artifacts/blip-captioner \
   --image examples/photo-one.jpg examples/photo-two.jpg \
+  --min-new-tokens 4 \
   --num-beams 3 \
   --repetition-penalty 1.1 \
+  --no-repeat-ngram-size 3 \
   --output reports/inference.json \
   --csv-output reports/inference.csv \
   --manifest-output reports/inference_manifest.json
@@ -101,7 +105,7 @@ python -m vlm_finetune.infer \
 - `reports/run_config.json` records the experiment settings.
 - `reports/data_profile.json` summarizes the train/validation caption splits before tokenization.
 - `reports/metrics.json` contains training metrics, validation caption metrics, and generation diagnostics such as output length, distinct n-grams, reference-token coverage, novel-token rate, repetition, and empty-output rate.
-- `reports/caption_predictions.json` stores validation references and generated captions for review.
+- `reports/caption_predictions.json` stores validation references, generated captions, per-example token F1, and length deltas for review.
 - `reports/inference.json` and `reports/inference.csv` are optional exports from local-image inference.
 - `reports/inference_manifest.json` is an optional record of the inference inputs and decoding settings.
 - `artifacts/blip-captioner/run_results.json` is the raw metrics file written by the Trainer.

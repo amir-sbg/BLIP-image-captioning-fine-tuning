@@ -36,6 +36,20 @@ def limit_image_paths(image_paths: list[Path], limit: int | None) -> list[Path]:
     return image_paths[:limit]
 
 
+def validate_image_paths(image_paths: list[Path]) -> list[Path]:
+    if not image_paths:
+        raise ValueError("at least one image path is required")
+    bad_paths = [path for path in image_paths if not path.is_file()]
+    if bad_paths:
+        raise ValueError(f"image file not found: {bad_paths[0]}")
+    bad_extensions = [
+        path for path in image_paths if path.suffix.lower() not in IMAGE_EXTENSIONS
+    ]
+    if bad_extensions:
+        raise ValueError(f"unsupported image extension: {bad_extensions[0].suffix}")
+    return image_paths
+
+
 def save_inference_results(
     results: object,
     output_path: Path,
@@ -165,6 +179,11 @@ if __name__ == "__main__":
             parser.error(str(error))
         if not image_paths:
             parser.error("no supported image files were found")
+    else:
+        try:
+            image_paths = validate_image_paths(image_paths)
+        except ValueError as error:
+            parser.error(str(error))
     try:
         image_paths = limit_image_paths(image_paths, args.limit)
     except ValueError as error:

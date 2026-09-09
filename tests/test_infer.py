@@ -11,6 +11,7 @@ from vlm_finetune.infer import (
     limit_image_paths,
     save_inference_csv,
     save_inference_results,
+    validate_image_paths,
 )
 
 
@@ -120,6 +121,26 @@ def test_limit_image_paths_keeps_original_order(tmp_path) -> None:
 def test_limit_image_paths_rejects_non_positive_limit(tmp_path) -> None:
     with pytest.raises(ValueError, match="limit"):
         limit_image_paths([tmp_path / "a.jpg"], 0)
+
+
+def test_validate_image_paths_rejects_missing_files(tmp_path) -> None:
+    with pytest.raises(ValueError, match="not found"):
+        validate_image_paths([tmp_path / "missing.jpg"])
+
+
+def test_validate_image_paths_rejects_unsupported_extensions(tmp_path) -> None:
+    path = tmp_path / "notes.txt"
+    path.write_text("")
+
+    with pytest.raises(ValueError, match="unsupported"):
+        validate_image_paths([path])
+
+
+def test_validate_image_paths_accepts_existing_images(tmp_path) -> None:
+    path = tmp_path / "photo.png"
+    path.write_text("")
+
+    assert validate_image_paths([path]) == [path]
 
 
 def test_inference_results_can_be_saved_as_json(tmp_path) -> None:
