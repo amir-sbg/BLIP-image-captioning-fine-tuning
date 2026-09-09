@@ -21,6 +21,21 @@ def _token_f1(reference: str, prediction: str) -> float:
     return 2 * precision * recall / (precision + recall)
 
 
+def token_f1_score(reference: str, prediction: str) -> float:
+    return _token_f1(reference, prediction)
+
+
+def caption_pair_diagnostics(reference: str, prediction: str) -> dict[str, float | int]:
+    reference_tokens = _tokens(reference)
+    prediction_tokens = _tokens(prediction)
+    return {
+        "reference_tokens": len(reference_tokens),
+        "prediction_tokens": len(prediction_tokens),
+        "token_f1": round(token_f1_score(reference, prediction), 4),
+        "length_delta": len(prediction_tokens) - len(reference_tokens),
+    }
+
+
 def _mean(values: list[int]) -> float:
     return sum(values) / len(values) if values else 0.0
 

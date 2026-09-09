@@ -7,7 +7,7 @@ from datasets import Dataset
 
 from .data import resolve_caption_column
 from .generation import generate_captions
-from .metrics import caption_metrics
+from .metrics import caption_metrics, caption_pair_diagnostics
 
 
 def save_caption_predictions(
@@ -23,6 +23,7 @@ def save_caption_predictions(
             "index": index,
             "reference": reference,
             "prediction": prediction,
+            **caption_pair_diagnostics(reference, prediction),
         }
         for index, (reference, prediction) in enumerate(
             zip(references, predictions)

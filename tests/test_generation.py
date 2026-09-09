@@ -6,10 +6,12 @@ import torch
 from vlm_finetune.evaluate import save_caption_predictions
 from vlm_finetune.generation import generate_captions
 from vlm_finetune.metrics import (
+    caption_pair_diagnostics,
     caption_diagnostics,
     caption_metrics,
     novel_prediction_token_rate,
     reference_token_coverage,
+    token_f1_score,
 )
 
 
@@ -177,6 +179,16 @@ def test_caption_metrics_include_token_overlap() -> None:
     assert metrics["prediction_mean_tokens"] == 2.5
 
 
+def test_pair_diagnostics_track_single_caption_error() -> None:
+    diagnostics = caption_pair_diagnostics("a small red bird", "small bird")
+
+    assert diagnostics["reference_tokens"] == 4
+    assert diagnostics["prediction_tokens"] == 2
+    assert diagnostics["length_delta"] == -2
+    assert diagnostics["token_f1"] == pytest.approx(0.6667)
+    assert token_f1_score("red bird", "red bird") == 1.0
+
+
 def test_caption_metrics_reject_length_mismatch() -> None:
     with pytest.raises(ValueError, match="same length"):
         caption_metrics(["one"], [])
@@ -226,3 +238,5 @@ def test_caption_predictions_are_saved_for_review(tmp_path) -> None:
     records = output_path.read_text()
     assert '"reference": "a red car"' in records
     assert '"prediction": "a green bike"' in records
+    assert '"token_f1"' in records
+    assert '"length_delta"' in records
