@@ -43,6 +43,24 @@ def test_inference_parser_reads_repetition_penalty(tmp_path) -> None:
     assert args.repetition_penalty == 1.15
 
 
+def test_inference_parser_reads_extra_decoding_controls(tmp_path) -> None:
+    args = build_parser().parse_args(
+        [
+            "--model-dir",
+            str(tmp_path / "model"),
+            "--image",
+            str(tmp_path / "image.jpg"),
+            "--min-new-tokens",
+            "4",
+            "--no-repeat-ngram-size",
+            "3",
+        ]
+    )
+
+    assert args.min_new_tokens == 4
+    assert args.no_repeat_ngram_size == 3
+
+
 def test_inference_parser_accepts_a_caption_prompt(tmp_path) -> None:
     args = build_parser().parse_args(
         [
@@ -124,14 +142,18 @@ def test_inference_manifest_records_decoding_settings(tmp_path) -> None:
         device_name="cpu",
         batch_size=2,
         max_new_tokens=24,
+        min_new_tokens=4,
         num_beams=4,
         repetition_penalty=1.1,
+        no_repeat_ngram_size=3,
         prompt="a close-up photo",
     )
 
     assert manifest["image_count"] == 2
     assert manifest["image_extensions"] == [".jpg", ".png"]
+    assert manifest["decoding"]["min_new_tokens"] == 4
     assert manifest["decoding"]["num_beams"] == 4
+    assert manifest["decoding"]["no_repeat_ngram_size"] == 3
     assert manifest["decoding"]["prompt"] == "a close-up photo"
 
 

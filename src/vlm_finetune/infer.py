@@ -61,8 +61,10 @@ def build_inference_manifest(
     device_name: str,
     batch_size: int,
     max_new_tokens: int,
+    min_new_tokens: int | None,
     num_beams: int,
     repetition_penalty: float,
+    no_repeat_ngram_size: int,
     prompt: str | None,
 ) -> dict:
     return {
@@ -74,8 +76,10 @@ def build_inference_manifest(
         "batch_size": batch_size,
         "decoding": {
             "max_new_tokens": max_new_tokens,
+            "min_new_tokens": min_new_tokens,
             "num_beams": num_beams,
             "repetition_penalty": repetition_penalty,
+            "no_repeat_ngram_size": no_repeat_ngram_size,
             "prompt": prompt,
         },
     }
@@ -97,8 +101,10 @@ def caption_files(
     device_name: str = "auto",
     batch_size: int = 4,
     max_new_tokens: int = 32,
+    min_new_tokens: int | None = None,
     num_beams: int = 3,
     repetition_penalty: float = 1.0,
+    no_repeat_ngram_size: int = 0,
     prompt: str | None = None,
 ) -> list[dict[str, str]]:
     device = _select_device(device_name)
@@ -114,8 +120,10 @@ def caption_files(
         device=device,
         batch_size=batch_size,
         max_new_tokens=max_new_tokens,
+        min_new_tokens=min_new_tokens,
         num_beams=num_beams,
         repetition_penalty=repetition_penalty,
+        no_repeat_ngram_size=no_repeat_ngram_size,
         prompt=prompt,
     )
     return [
@@ -135,8 +143,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--device", default="auto")
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--max-new-tokens", type=int, default=32)
+    parser.add_argument("--min-new-tokens", type=int)
     parser.add_argument("--num-beams", type=int, default=3)
     parser.add_argument("--repetition-penalty", type=float, default=1.0)
+    parser.add_argument("--no-repeat-ngram-size", type=int, default=0)
     parser.add_argument("--prompt", help="optional text prompt passed to BLIP for every image")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--csv-output", type=Path)
@@ -165,8 +175,10 @@ if __name__ == "__main__":
         device_name=args.device,
         batch_size=args.batch_size,
         max_new_tokens=args.max_new_tokens,
+        min_new_tokens=args.min_new_tokens,
         num_beams=args.num_beams,
         repetition_penalty=args.repetition_penalty,
+        no_repeat_ngram_size=args.no_repeat_ngram_size,
         prompt=args.prompt,
     )
     if args.output is not None:
@@ -181,8 +193,10 @@ if __name__ == "__main__":
                 device_name=args.device,
                 batch_size=args.batch_size,
                 max_new_tokens=args.max_new_tokens,
+                min_new_tokens=args.min_new_tokens,
                 num_beams=args.num_beams,
                 repetition_penalty=args.repetition_penalty,
+                no_repeat_ngram_size=args.no_repeat_ngram_size,
                 prompt=args.prompt,
             ),
             args.manifest_output,

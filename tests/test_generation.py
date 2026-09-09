@@ -32,13 +32,25 @@ class TinyModel:
     def __init__(self) -> None:
         self.repetition_penalty = None
         self.num_beams = None
+        self.min_new_tokens = None
+        self.no_repeat_ngram_size = None
 
     def eval(self):
         return self
 
-    def generate(self, pixel_values, max_new_tokens, num_beams, repetition_penalty):
+    def generate(
+        self,
+        pixel_values,
+        max_new_tokens,
+        num_beams,
+        repetition_penalty,
+        no_repeat_ngram_size,
+        min_new_tokens=None,
+    ):
         self.num_beams = num_beams
         self.repetition_penalty = repetition_penalty
+        self.min_new_tokens = min_new_tokens
+        self.no_repeat_ngram_size = no_repeat_ngram_size
         return torch.zeros((len(pixel_values), 3), dtype=torch.long)
 
 
@@ -75,6 +87,29 @@ def test_generation_rejects_invalid_repetition_penalty() -> None:
         )
 
 
+def test_generation_rejects_bad_minimum_length() -> None:
+    with pytest.raises(ValueError, match="min_new_tokens"):
+        generate_captions(
+            TinyModel(),
+            TinyProcessor(),
+            ["one"],
+            torch.device("cpu"),
+            max_new_tokens=4,
+            min_new_tokens=5,
+        )
+
+
+def test_generation_rejects_bad_no_repeat_ngram_size() -> None:
+    with pytest.raises(ValueError, match="no_repeat_ngram_size"):
+        generate_captions(
+            TinyModel(),
+            TinyProcessor(),
+            ["one"],
+            torch.device("cpu"),
+            no_repeat_ngram_size=-1,
+        )
+
+
 def test_generation_passes_repetition_penalty_to_model() -> None:
     model = TinyModel()
     generate_captions(
@@ -99,6 +134,22 @@ def test_generation_passes_beam_count_to_model() -> None:
     )
 
     assert model.num_beams == 4
+
+
+def test_generation_passes_extra_decoding_controls_to_model() -> None:
+    model = TinyModel()
+    generate_captions(
+        model,
+        TinyProcessor(),
+        ["one"],
+        torch.device("cpu"),
+        max_new_tokens=12,
+        min_new_tokens=4,
+        no_repeat_ngram_size=3,
+    )
+
+    assert model.min_new_tokens == 4
+    assert model.no_repeat_ngram_size == 3
 
 
 def test_generation_passes_prompt_to_processor() -> None:

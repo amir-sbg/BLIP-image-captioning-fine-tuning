@@ -105,3 +105,7 @@ def test_fine_tune_config_validates_eval_decoding() -> None:
         FineTuneConfig(eval_num_beams=0)
     with pytest.raises(ValueError, match="eval_repetition_penalty"):
         FineTuneConfig(eval_repetition_penalty=0.8)
+    with pytest.raises(ValueError, match="eval_min_new_tokens"):
+        FineTuneConfig(max_new_tokens=8, eval_min_new_tokens=9)
+    with pytest.raises(ValueError, match="eval_no_repeat_ngram_size"):
+        FineTuneConfig(eval_no_repeat_ngram_size=-1)
