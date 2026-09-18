@@ -1,19 +1,16 @@
 # BLIP Image Captioning Fine-Tuning
 
-A compact VLM fine-tuning project for adapting **BLIP** to an image-caption dataset. It covers the full path from dataset preparation to training, generation-based evaluation, and inference on local images using PyTorch and Hugging Face Transformers.
+A compact PyTorch pipeline for adapting `Salesforce/blip-image-captioning-base` to an image-caption dataset. It covers reproducible data preparation, masked-label fine-tuning, generation-based evaluation, and inference on local images.
 
-The default experiment uses the public `lambdalabs/pokemon-blip-captions` dataset and `Salesforce/blip-image-captioning-base`. The sample limits keep the first run manageable while leaving the dataset, model, and training settings configurable from the command line.
+The default experiment uses `lambdalabs/pokemon-blip-captions`. Sample limits and training settings are configurable, so the same code can be used for a quick smoke run or a larger fine-tuning job.
 
 ## Pipeline
 
-1. Load an image-caption dataset and create a reproducible train/validation split.
-2. Write a small dataset profile with split size, caption lengths, and empty-caption counts.
-3. Convert images to RGB, normalize caption text, and tokenize captions with `BlipProcessor`.
-4. Mask padding tokens in the language-model labels so they do not contribute to the loss.
-5. Fine-tune `BlipForConditionalGeneration` with `Seq2SeqTrainer`, warmup, weight decay, and gradient accumulation.
-6. Generate captions for the validation images and report exact match, token-level F1, length, diversity, reference-token coverage, novel-token rate, repetition, and empty-output diagnostics.
-7. Save per-example references, predictions, token F1, and length deltas for qualitative error analysis.
-8. Save the trained model and processor for local image captioning.
+1. Load the dataset and create a reproducible train/validation split.
+2. Normalize captions and prepare BLIP processor inputs with padded labels masked from the loss.
+3. Fine-tune `BlipForConditionalGeneration` with the Hugging Face Trainer.
+4. Evaluate generated captions with exact match, token F1, length bias, diversity, repetition, vocabulary coverage, and empty-output checks.
+5. Save per-example predictions for qualitative review and use the trained processor/model for local inference.
 
 ## Setup
 
@@ -25,102 +22,62 @@ python -m pip install -e .
 python -m pytest -q
 ```
 
-The training command needs access to the Hugging Face Hub the first time it downloads the dataset and base model. A CUDA-enabled PyTorch installation is recommended, but the code also runs on CPU for small experiments.
+The first run downloads the dataset and base model from the Hugging Face Hub. CUDA is recommended for training; CPU is sufficient for small tests.
 
 ## Train
-
-Run the default small experiment:
 
 ```bash
 python -m vlm_finetune.train
 ```
 
-For a quick local smoke run, reduce both sample limits and the number of epochs:
+For a small local run:
 
 ```bash
 python -m vlm_finetune.train \
   --max-train-samples 32 \
   --max-validation-samples 8 \
   --epochs 1 \
-  --eval-min-new-tokens 4 \
-  --eval-num-beams 3 \
-  --eval-repetition-penalty 1.1 \
-  --eval-no-repeat-ngram-size 3 \
   --output-dir artifacts/smoke-run \
   --report-dir reports/smoke-run
 ```
 
-Training can continue from a saved Trainer checkpoint:
-
-```bash
-python -m vlm_finetune.train \
-  --resume-from-checkpoint artifacts/blip-captioner/checkpoint-100
-```
-
-The default configuration uses a maximum caption length of 64 tokens, batch size 4, learning rate `5e-5`, and one epoch. Validation generation uses beam search by default. `--eval-min-new-tokens`, `--eval-num-beams`, `--eval-repetition-penalty`, and `--eval-no-repeat-ngram-size` make the reported caption metrics match the decoding policy you want to inspect. These are starting points for a small experiment, not fixed assumptions about every dataset.
+Training can resume from a Trainer checkpoint with `--resume-from-checkpoint`. Generation settings used during validation, including beam width, minimum length, repetition penalty, and no-repeat n-gram size, are available as command-line options.
 
 ## Inference
 
-After training, generate captions for local images:
+Caption individual files:
 
 ```bash
 python -m vlm_finetune.infer \
   --model-dir artifacts/blip-captioner \
   --image examples/photo-one.jpg examples/photo-two.jpg \
-  --min-new-tokens 4 \
   --num-beams 3 \
-  --repetition-penalty 1.1 \
-  --no-repeat-ngram-size 3 \
   --output reports/inference.json \
-  --csv-output reports/inference.csv \
-  --manifest-output reports/inference_manifest.json
+  --csv-output reports/inference.csv
 ```
 
-The command prints one JSON record per image with its path and generated caption. When `--output` is provided, it also writes the same records to a JSON file; `--csv-output` writes a simple two-column review file. `--manifest-output` records the model directory, selected images, device request, prompt, and decoding settings for later comparison. `--num-beams` controls deterministic beam-search width during generation, and `--repetition-penalty` can discourage repeated phrases. Use `--device cuda`, `--device mps`, or `--device cpu` to select a device explicitly; `auto` selects the first available accelerator.
-
-An optional prompt can be applied to every image when a particular caption style or prefix is useful:
-
-```bash
-python -m vlm_finetune.infer \
-  --model-dir artifacts/blip-captioner \
-  --image examples/photo-one.jpg \
-  --prompt "a watercolor illustration"
-```
-
-If `--prompt` is omitted, BLIP generates an unconstrained caption.
-
-For a folder of images, use `--image-dir`; add `--recursive` to include nested folders:
-
-```bash
-python -m vlm_finetune.infer \
-  --model-dir artifacts/blip-captioner \
-  --image-dir examples \
-  --recursive \
-  --limit 25
-```
+Use `--image-dir` for a folder, `--recursive` for nested folders, and `--device cuda`, `mps`, or `cpu` to select a device. An optional `--prompt` can provide a caption prefix or style.
 
 ## Outputs
 
-- `artifacts/blip-captioner/` contains the fine-tuned model, processor, and Trainer checkpoints.
-- `reports/run_config.json` records the experiment settings.
-- `reports/data_profile.json` summarizes the train/validation caption splits before tokenization.
-- `reports/metrics.json` contains training metrics, validation caption metrics, and generation diagnostics such as output length, distinct n-grams, reference-token coverage, novel-token rate, repetition, and empty-output rate.
-- `reports/caption_predictions.json` stores validation references, generated captions, per-example token F1, and length deltas for review.
-- `reports/inference.json` and `reports/inference.csv` are optional exports from local-image inference.
-- `reports/inference_manifest.json` is an optional record of the inference inputs and decoding settings.
-- `artifacts/blip-captioner/run_results.json` is the raw metrics file written by the Trainer.
+- `artifacts/` contains the fine-tuned model, processor, and Trainer checkpoints.
+- `reports/metrics.json` stores validation and generation diagnostics.
+- `reports/caption_predictions.json` stores references, predictions, token F1, and length deltas.
+- `reports/inference.json` and `reports/inference.csv` provide local-image predictions.
+- `reports/inference_manifest.json` records the selected images and decoding settings.
 
 ## Project layout
 
 ```text
 src/vlm_finetune/
 ├── config.py       experiment settings and validation
-├── data.py         dataset loading, profiling, and processor preparation
+├── data.py         dataset loading, profiling, and preprocessing
 ├── model.py        BLIP model and processor loading
-├── training.py     Hugging Face Trainer configuration
-├── train.py        end-to-end fine-tuning command
+├── training.py     Trainer configuration
+├── train.py        fine-tuning entry point
 ├── generation.py   batched caption generation
-├── metrics.py      lightweight caption metrics
-├── evaluate.py     validation-set evaluation
-└── infer.py        local-image inference command
+├── metrics.py      caption metrics and diagnostics
+├── evaluate.py     validation evaluation and exports
+└── infer.py        local-image inference
+tests/
 ```
