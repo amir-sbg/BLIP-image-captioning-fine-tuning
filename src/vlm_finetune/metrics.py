@@ -106,6 +106,7 @@ def caption_diagnostics(
     return {
         "reference_mean_tokens": reference_mean,
         "prediction_mean_tokens": prediction_mean,
+        "mean_length_delta": prediction_mean - reference_mean,
         "prediction_to_reference_length": (
             prediction_mean / reference_mean if reference_mean else 0.0
         ),

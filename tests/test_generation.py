@@ -206,6 +206,7 @@ def test_caption_diagnostics_tracks_empty_predictions() -> None:
 
     assert diagnostics["empty_predictions"] == 1
     assert diagnostics["empty_prediction_rate"] == 0.5
+    assert diagnostics["mean_length_delta"] == pytest.approx(-2.5)
     assert diagnostics["prediction_to_reference_length"] == pytest.approx(2 / 7)
 
 
