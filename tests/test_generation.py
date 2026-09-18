@@ -189,6 +189,10 @@ def test_pair_diagnostics_track_single_caption_error() -> None:
     assert token_f1_score("red bird", "red bird") == 1.0
 
 
+def test_token_f1_keeps_unicode_caption_words() -> None:
+    assert token_f1_score("یک گربه", "گربه") == pytest.approx(2 / 3)
+
+
 def test_caption_metrics_reject_length_mismatch() -> None:
     with pytest.raises(ValueError, match="same length"):
         caption_metrics(["one"], [])
