@@ -56,6 +56,11 @@ class TinyModel:
         return torch.zeros((len(pixel_values), 3), dtype=torch.long)
 
 
+class ShortDecodeProcessor(TinyProcessor):
+    def batch_decode(self, generated_ids, skip_special_tokens):
+        return ["a small object"] * max(0, len(generated_ids) - 1)
+
+
 def test_generation_batches_images() -> None:
     captions = generate_captions(
         TinyModel(),
@@ -65,6 +70,16 @@ def test_generation_batches_images() -> None:
         batch_size=2,
     )
     assert captions == ["a small object"] * 3
+
+
+def test_generation_rejects_decoder_batch_mismatch() -> None:
+    with pytest.raises(RuntimeError, match="different number"):
+        generate_captions(
+            TinyModel(),
+            ShortDecodeProcessor(),
+            ["one", "two"],
+            torch.device("cpu"),
+        )
 
 
 def test_generation_rejects_invalid_beam_count() -> None:

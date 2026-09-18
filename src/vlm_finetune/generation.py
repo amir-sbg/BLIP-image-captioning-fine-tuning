@@ -66,11 +66,16 @@ def generate_captions(
             if min_new_tokens is not None:
                 generate_kwargs["min_new_tokens"] = min_new_tokens
             generated_ids = model.generate(**inputs, **generate_kwargs)
-            captions.extend(
-                caption.strip()
-                for caption in processor.batch_decode(
+            decoded = list(
+                processor.batch_decode(
                     generated_ids,
                     skip_special_tokens=True,
                 )
             )
+            if len(decoded) != len(batch_images):
+                raise RuntimeError(
+                    "caption decoder returned a different number of outputs "
+                    "than the input batch"
+                )
+            captions.extend(caption.strip() for caption in decoded)
     return captions
