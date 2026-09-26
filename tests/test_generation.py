@@ -9,6 +9,7 @@ from vlm_finetune.metrics import (
     caption_pair_diagnostics,
     caption_diagnostics,
     caption_metrics,
+    caption_length_buckets,
     novel_prediction_token_rate,
     reference_token_coverage,
     token_f1_score,
@@ -236,6 +237,15 @@ def test_caption_diagnostics_reports_diversity_and_repetition() -> None:
     assert diagnostics["prediction_repeated_bigram_rate"] > 0.0
 
 
+def test_caption_length_buckets_track_generation_length_bias() -> None:
+    references = ["a small red bird", "blue fish", "a car"]
+    predictions = ["bird", "blue fish near coral reef", "a car"]
+
+    buckets = caption_length_buckets(references, predictions, tolerance=1)
+
+    assert buckets == {"too_short": 1, "close": 1, "too_long": 1}
+
+
 def test_caption_metrics_report_reference_coverage_and_novel_tokens() -> None:
     references = ["red bird on branch", "blue fish in water"]
     predictions = ["red bird on branch", "purple robot"]
@@ -246,6 +256,7 @@ def test_caption_metrics_report_reference_coverage_and_novel_tokens() -> None:
     diagnostics = caption_diagnostics(references, predictions)
     assert diagnostics["reference_token_coverage"] == pytest.approx(4 / 8)
     assert diagnostics["novel_prediction_token_rate"] == pytest.approx(2 / 6)
+    assert diagnostics["length_bucket_close"] >= 0
 
 
 def test_caption_predictions_are_saved_for_review(tmp_path) -> None:

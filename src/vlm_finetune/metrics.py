@@ -90,6 +90,27 @@ def novel_prediction_token_rate(references: list[str], predictions: list[str]) -
     return novel / len(prediction_tokens)
 
 
+def caption_length_buckets(
+    references: list[str],
+    predictions: list[str],
+    tolerance: int = 2,
+) -> dict[str, int]:
+    if tolerance < 0:
+        raise ValueError("tolerance must not be negative")
+    if len(references) != len(predictions):
+        raise ValueError("references and predictions must have the same length")
+    buckets = {"too_short": 0, "close": 0, "too_long": 0}
+    for reference, prediction in zip(references, predictions):
+        delta = len(_tokens(prediction)) - len(_tokens(reference))
+        if delta < -tolerance:
+            buckets["too_short"] += 1
+        elif delta > tolerance:
+            buckets["too_long"] += 1
+        else:
+            buckets["close"] += 1
+    return buckets
+
+
 def caption_diagnostics(
     references: list[str],
     predictions: list[str],
@@ -102,6 +123,7 @@ def caption_diagnostics(
     reference_mean = _mean(reference_lengths)
     prediction_mean = _mean(prediction_lengths)
     empty_predictions = sum(length == 0 for length in prediction_lengths)
+    length_buckets = caption_length_buckets(references, predictions)
 
     return {
         "reference_mean_tokens": reference_mean,
@@ -121,6 +143,9 @@ def caption_diagnostics(
         "reference_distinct_bigrams": _distinct_ngram_ratio(references, 2),
         "empty_prediction_rate": empty_predictions / len(predictions) if predictions else 0.0,
         "empty_predictions": empty_predictions,
+        "length_bucket_too_short": length_buckets["too_short"],
+        "length_bucket_close": length_buckets["close"],
+        "length_bucket_too_long": length_buckets["too_long"],
     }
 
 
