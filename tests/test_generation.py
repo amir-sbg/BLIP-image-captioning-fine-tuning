@@ -4,7 +4,7 @@ import pytest
 import torch
 
 from vlm_finetune.evaluate import save_caption_predictions
-from vlm_finetune.generation import generate_captions
+from vlm_finetune.generation import clean_decoded_caption, generate_captions
 from vlm_finetune.metrics import (
     caption_pair_diagnostics,
     caption_diagnostics,
@@ -71,6 +71,10 @@ def test_generation_batches_images() -> None:
         batch_size=2,
     )
     assert captions == ["a small object"] * 3
+
+
+def test_clean_decoded_caption_normalizes_whitespace() -> None:
+    assert clean_decoded_caption("  a   small\n object  ") == "a small object"
 
 
 def test_generation_rejects_decoder_batch_mismatch() -> None:

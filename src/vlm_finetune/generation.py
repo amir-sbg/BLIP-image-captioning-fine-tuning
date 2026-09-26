@@ -5,6 +5,10 @@ from collections.abc import Sequence
 import torch
 
 
+def clean_decoded_caption(text: str) -> str:
+    return " ".join(str(text).split())
+
+
 def _move_to_device(values, device: torch.device):
     if hasattr(values, "to"):
         return values.to(device)
@@ -77,5 +81,5 @@ def generate_captions(
                     "caption decoder returned a different number of outputs "
                     "than the input batch"
                 )
-            captions.extend(caption.strip() for caption in decoded)
+            captions.extend(clean_decoded_caption(caption) for caption in decoded)
     return captions
