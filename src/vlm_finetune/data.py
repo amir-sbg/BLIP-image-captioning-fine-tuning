@@ -63,8 +63,27 @@ def caption_dataset_profile(
         "min_caption_tokens": min(lengths) if lengths else 0,
         "mean_caption_tokens": round(sum(lengths) / len(lengths), 3) if lengths else 0.0,
         "max_caption_tokens": max(lengths) if lengths else 0,
+        "caption_token_percentiles": caption_length_percentiles(lengths),
         "pil_like_images": pil_like_images,
     }
+
+
+def caption_length_percentiles(lengths: list[int]) -> dict[str, int]:
+    if not lengths:
+        return {"p50": 0, "p90": 0, "p95": 0}
+    ordered = sorted(lengths)
+    return {
+        "p50": _nearest_rank(ordered, 0.50),
+        "p90": _nearest_rank(ordered, 0.90),
+        "p95": _nearest_rank(ordered, 0.95),
+    }
+
+
+def _nearest_rank(values: list[int], percentile: float) -> int:
+    if not 0 < percentile <= 1:
+        raise ValueError("percentile must be in (0, 1]")
+    index = max(round(percentile * len(values) + 0.5) - 1, 0)
+    return values[min(index, len(values) - 1)]
 
 
 def _limit_dataset(dataset: Dataset, limit: int | None) -> Dataset:

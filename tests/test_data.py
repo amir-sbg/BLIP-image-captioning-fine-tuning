@@ -6,6 +6,7 @@ from datasets import Dataset
 
 from vlm_finetune.config import FineTuneConfig
 from vlm_finetune.data import (
+    caption_length_percentiles,
     caption_dataset_profile,
     normalize_caption,
     prepare_dataset,
@@ -51,6 +52,11 @@ def test_caption_dataset_profile_summarizes_split() -> None:
     assert profile["min_caption_tokens"] == 1
     assert profile["mean_caption_tokens"] == 1.5
     assert profile["max_caption_tokens"] == 2
+    assert profile["caption_token_percentiles"] == {"p50": 1, "p90": 2, "p95": 2}
+
+
+def test_caption_length_percentiles_use_nearest_rank() -> None:
+    assert caption_length_percentiles([1, 5, 2, 9]) == {"p50": 2, "p90": 9, "p95": 9}
 
 
 def test_missing_image_column_is_explicit() -> None:
