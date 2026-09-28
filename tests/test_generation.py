@@ -10,6 +10,7 @@ from vlm_finetune.metrics import (
     caption_diagnostics,
     caption_metrics,
     caption_length_buckets,
+    caption_quality_flags,
     novel_prediction_token_rate,
     reference_token_coverage,
     token_f1_score,
@@ -261,6 +262,24 @@ def test_caption_metrics_report_reference_coverage_and_novel_tokens() -> None:
     assert diagnostics["reference_token_coverage"] == pytest.approx(4 / 8)
     assert diagnostics["novel_prediction_token_rate"] == pytest.approx(2 / 6)
     assert diagnostics["length_bucket_close"] >= 0
+
+
+def test_caption_quality_flags_surface_generation_failures() -> None:
+    flags = caption_quality_flags(
+        {
+            "empty_prediction_rate": 0.5,
+            "prediction_to_reference_length": 0.4,
+            "prediction_repeated_bigram_rate": 0.25,
+            "reference_token_coverage": 0.2,
+            "novel_prediction_token_rate": 0.6,
+        }
+    )
+
+    assert "empty_predictions" in flags
+    assert "short_caption_bias" in flags
+    assert "repetitive_bigrams" in flags
+    assert "low_reference_vocabulary_coverage" in flags
+    assert "many_novel_tokens" in flags
 
 
 def test_caption_predictions_are_saved_for_review(tmp_path) -> None:

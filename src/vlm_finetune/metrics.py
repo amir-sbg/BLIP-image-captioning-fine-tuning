@@ -149,10 +149,27 @@ def caption_diagnostics(
     }
 
 
+def caption_quality_flags(metrics: dict[str, float | int]) -> list[str]:
+    flags = []
+    if float(metrics.get("empty_prediction_rate", 0.0)) > 0.0:
+        flags.append("empty_predictions")
+    if float(metrics.get("prediction_to_reference_length", 1.0)) < 0.65:
+        flags.append("short_caption_bias")
+    if float(metrics.get("prediction_to_reference_length", 1.0)) > 1.50:
+        flags.append("long_caption_bias")
+    if float(metrics.get("prediction_repeated_bigram_rate", 0.0)) > 0.20:
+        flags.append("repetitive_bigrams")
+    if float(metrics.get("reference_token_coverage", 1.0)) < 0.40:
+        flags.append("low_reference_vocabulary_coverage")
+    if float(metrics.get("novel_prediction_token_rate", 0.0)) > 0.50:
+        flags.append("many_novel_tokens")
+    return flags
+
+
 def caption_metrics(
     references: list[str],
     predictions: list[str],
-) -> dict[str, float | int]:
+) -> dict[str, float | int | list[str]]:
     if len(references) != len(predictions):
         raise ValueError("references and predictions must have the same length")
     if not references:
@@ -166,9 +183,11 @@ def caption_metrics(
         _token_f1(reference, prediction)
         for reference, prediction in zip(references, predictions)
     ) / len(references)
-    return {
+    metrics = {
         "n_examples": len(references),
         "exact_match": exact_matches / len(references),
         "token_f1": token_f1,
         **caption_diagnostics(references, predictions),
     }
+    metrics["quality_flags"] = caption_quality_flags(metrics)
+    return metrics
