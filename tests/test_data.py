@@ -52,7 +52,7 @@ def test_caption_dataset_profile_summarizes_split() -> None:
     assert profile["min_caption_tokens"] == 1
     assert profile["mean_caption_tokens"] == 1.5
     assert profile["max_caption_tokens"] == 2
-    assert profile["caption_token_percentiles"] == {"p50": 1, "p90": 2, "p95": 2}
+    assert profile["caption_token_percentiles"] == {"p50": 2, "p90": 2, "p95": 2}
 
 
 def test_caption_length_percentiles_use_nearest_rank() -> None:

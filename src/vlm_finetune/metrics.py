@@ -36,6 +36,20 @@ def caption_pair_diagnostics(reference: str, prediction: str) -> dict[str, float
     }
 
 
+def caption_pair_flags(reference: str, prediction: str) -> list[str]:
+    diagnostics = caption_pair_diagnostics(reference, prediction)
+    flags = []
+    if diagnostics["prediction_tokens"] == 0:
+        flags.append("empty_prediction")
+    if float(diagnostics["token_f1"]) < 0.25:
+        flags.append("low_token_overlap")
+    if int(diagnostics["length_delta"]) <= -3:
+        flags.append("much_shorter_than_reference")
+    if int(diagnostics["length_delta"]) >= 4:
+        flags.append("much_longer_than_reference")
+    return flags
+
+
 def _mean(values: list[int]) -> float:
     return sum(values) / len(values) if values else 0.0
 

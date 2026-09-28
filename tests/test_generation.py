@@ -7,6 +7,7 @@ from vlm_finetune.evaluate import save_caption_predictions
 from vlm_finetune.generation import clean_decoded_caption, generate_captions
 from vlm_finetune.metrics import (
     caption_pair_diagnostics,
+    caption_pair_flags,
     caption_diagnostics,
     caption_metrics,
     caption_length_buckets,
@@ -210,6 +211,14 @@ def test_pair_diagnostics_track_single_caption_error() -> None:
     assert token_f1_score("red bird", "red bird") == 1.0
 
 
+def test_pair_flags_mark_bad_individual_predictions() -> None:
+    assert caption_pair_flags("a detailed red bird on a branch", "") == [
+        "empty_prediction",
+        "low_token_overlap",
+        "much_shorter_than_reference",
+    ]
+
+
 def test_token_f1_keeps_unicode_caption_words() -> None:
     assert token_f1_score("یک گربه", "گربه") == pytest.approx(2 / 3)
 
@@ -294,3 +303,4 @@ def test_caption_predictions_are_saved_for_review(tmp_path) -> None:
     assert '"prediction": "a green bike"' in records
     assert '"token_f1"' in records
     assert '"length_delta"' in records
+    assert '"flags"' in records
