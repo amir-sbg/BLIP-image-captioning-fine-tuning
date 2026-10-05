@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from collections import Counter
+from math import exp, log, sqrt
 
 
 def _tokens(text: str) -> list[str]:
@@ -47,6 +48,31 @@ def rouge_l_score(reference: str, prediction: str) -> float:
     return 2 * precision * recall / (precision + recall)
 
 
+def bleu_2_score(reference: str, prediction: str) -> float:
+    """Compute a smoothed sentence-level BLEU score through bigrams."""
+
+    reference_tokens = _tokens(reference)
+    prediction_tokens = _tokens(prediction)
+    if not prediction_tokens:
+        return float(not reference_tokens)
+    if not reference_tokens:
+        return 0.0
+
+    precisions = []
+    for n in (1, 2):
+        reference_ngrams = Counter(_ngrams(reference_tokens, n))
+        prediction_ngrams = Counter(_ngrams(prediction_tokens, n))
+        overlap = sum((reference_ngrams & prediction_ngrams).values())
+        total = sum(prediction_ngrams.values())
+        precisions.append((overlap + 1.0) / (total + 1.0))
+    brevity_penalty = (
+        exp(1.0 - len(reference_tokens) / len(prediction_tokens))
+        if len(prediction_tokens) < len(reference_tokens)
+        else 1.0
+    )
+    return brevity_penalty * sqrt(exp(log(precisions[0]) + log(precisions[1])))
+
+
 def caption_pair_diagnostics(reference: str, prediction: str) -> dict[str, float | int]:
     reference_tokens = _tokens(reference)
     prediction_tokens = _tokens(prediction)
@@ -55,6 +81,7 @@ def caption_pair_diagnostics(reference: str, prediction: str) -> dict[str, float
         "prediction_tokens": len(prediction_tokens),
         "token_f1": round(token_f1_score(reference, prediction), 4),
         "rouge_l": round(rouge_l_score(reference, prediction), 4),
+        "bleu_2": round(bleu_2_score(reference, prediction), 4),
         "length_delta": len(prediction_tokens) - len(reference_tokens),
     }
 
@@ -224,11 +251,16 @@ def caption_metrics(
         rouge_l_score(reference, prediction)
         for reference, prediction in zip(references, predictions)
     ) / len(references)
+    bleu_2 = sum(
+        bleu_2_score(reference, prediction)
+        for reference, prediction in zip(references, predictions)
+    ) / len(references)
     metrics = {
         "n_examples": len(references),
         "exact_match": exact_matches / len(references),
         "token_f1": token_f1,
         "rouge_l": rouge_l,
+        "bleu_2": bleu_2,
         **caption_diagnostics(references, predictions),
     }
     metrics["quality_flags"] = caption_quality_flags(metrics)

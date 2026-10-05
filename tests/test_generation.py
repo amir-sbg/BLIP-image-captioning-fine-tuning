@@ -6,6 +6,7 @@ import torch
 from vlm_finetune.evaluate import save_caption_predictions
 from vlm_finetune.generation import clean_decoded_caption, generate_captions
 from vlm_finetune.metrics import (
+    bleu_2_score,
     caption_pair_diagnostics,
     caption_pair_flags,
     caption_diagnostics,
@@ -230,6 +231,14 @@ def test_rouge_l_rewards_caption_word_order() -> None:
 
     assert ordered > shuffled
     assert rouge_l_score("", "") == 1.0
+
+
+def test_bleu_2_rewards_local_phrase_agreement() -> None:
+    exact = bleu_2_score("a red bird on a branch", "a red bird on a branch")
+    reordered = bleu_2_score("a red bird on a branch", "branch a on bird red a")
+
+    assert exact == pytest.approx(1.0)
+    assert exact > reordered
 
 
 def test_caption_metrics_reject_length_mismatch() -> None:
