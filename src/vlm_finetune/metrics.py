@@ -194,6 +194,42 @@ def caption_length_buckets(
     return buckets
 
 
+def caption_length_slice_metrics(
+    references: list[str],
+    predictions: list[str],
+) -> dict[str, dict[str, float | int]]:
+    if len(references) != len(predictions):
+        raise ValueError("references and predictions must have the same length")
+    slices = {
+        "short_1_4": [],
+        "medium_5_9": [],
+        "long_10_plus": [],
+    }
+    for reference, prediction in zip(references, predictions):
+        length = len(_tokens(reference))
+        name = "short_1_4" if length <= 4 else "medium_5_9" if length <= 9 else "long_10_plus"
+        slices[name].append((reference, prediction))
+
+    report = {}
+    for name, pairs in slices.items():
+        report[name] = {
+            "n_examples": len(pairs),
+            "token_f1": (
+                sum(_token_f1(reference, prediction) for reference, prediction in pairs)
+                / len(pairs)
+                if pairs
+                else 0.0
+            ),
+            "rouge_l": (
+                sum(rouge_l_score(reference, prediction) for reference, prediction in pairs)
+                / len(pairs)
+                if pairs
+                else 0.0
+            ),
+        }
+    return report
+
+
 def caption_diagnostics(
     references: list[str],
     predictions: list[str],
@@ -288,6 +324,7 @@ def caption_metrics(
         "rouge_l_ci95_low": rouge_l_interval[0],
         "rouge_l_ci95_high": rouge_l_interval[1],
         "bleu_2": bleu_2,
+        "length_slices": caption_length_slice_metrics(references, predictions),
         **caption_diagnostics(references, predictions),
     }
     metrics["quality_flags"] = caption_quality_flags(metrics)

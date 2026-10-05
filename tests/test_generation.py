@@ -13,6 +13,7 @@ from vlm_finetune.metrics import (
     caption_diagnostics,
     caption_metrics,
     caption_length_buckets,
+    caption_length_slice_metrics,
     caption_quality_flags,
     novel_prediction_token_rate,
     reference_token_coverage,
@@ -285,6 +286,18 @@ def test_caption_length_buckets_track_generation_length_bias() -> None:
     buckets = caption_length_buckets(references, predictions, tolerance=1)
 
     assert buckets == {"too_short": 1, "close": 1, "too_long": 1}
+
+
+def test_caption_metrics_are_sliced_by_reference_length() -> None:
+    slices = caption_length_slice_metrics(
+        ["red bird", "a red bird sitting near water", "one two three four five six seven eight nine ten"],
+        ["red bird", "red bird near water", "one two"],
+    )
+
+    assert slices["short_1_4"]["n_examples"] == 1
+    assert slices["medium_5_9"]["n_examples"] == 1
+    assert slices["long_10_plus"]["n_examples"] == 1
+    assert slices["short_1_4"]["token_f1"] > slices["long_10_plus"]["token_f1"]
 
 
 def test_caption_metrics_report_reference_coverage_and_novel_tokens() -> None:
