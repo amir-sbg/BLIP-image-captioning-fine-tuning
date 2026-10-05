@@ -7,6 +7,7 @@ from vlm_finetune.evaluate import save_caption_predictions
 from vlm_finetune.generation import clean_decoded_caption, generate_captions
 from vlm_finetune.metrics import (
     bleu_2_score,
+    bootstrap_mean_interval,
     caption_pair_diagnostics,
     caption_pair_flags,
     caption_diagnostics,
@@ -239,6 +240,14 @@ def test_bleu_2_rewards_local_phrase_agreement() -> None:
 
     assert exact == pytest.approx(1.0)
     assert exact > reordered
+
+
+def test_bootstrap_interval_is_reproducible_and_contains_mean() -> None:
+    first = bootstrap_mean_interval([0.2, 0.4, 0.8, 1.0], samples=200, seed=7)
+    second = bootstrap_mean_interval([0.2, 0.4, 0.8, 1.0], samples=200, seed=7)
+
+    assert first == second
+    assert first[0] <= 0.6 <= first[1]
 
 
 def test_caption_metrics_reject_length_mismatch() -> None:

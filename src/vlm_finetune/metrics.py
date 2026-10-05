@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from collections import Counter
 from math import exp, log, sqrt
+from random import Random
 
 
 def _tokens(text: str) -> list[str]:
@@ -71,6 +72,24 @@ def bleu_2_score(reference: str, prediction: str) -> float:
         else 1.0
     )
     return brevity_penalty * sqrt(exp(log(precisions[0]) + log(precisions[1])))
+
+
+def bootstrap_mean_interval(
+    values: list[float],
+    samples: int = 1000,
+    seed: int = 42,
+) -> tuple[float, float]:
+    if not values:
+        raise ValueError("values must not be empty")
+    if samples < 1:
+        raise ValueError("samples must be positive")
+    random = Random(seed)
+    count = len(values)
+    means = sorted(
+        sum(values[random.randrange(count)] for _ in range(count)) / count
+        for _ in range(samples)
+    )
+    return means[int(0.025 * (samples - 1))], means[int(0.975 * (samples - 1))]
 
 
 def caption_pair_diagnostics(reference: str, prediction: str) -> dict[str, float | int]:
@@ -243,14 +262,18 @@ def caption_metrics(
         reference.strip().lower() == prediction.strip().lower()
         for reference, prediction in zip(references, predictions)
     )
-    token_f1 = sum(
+    token_f1_values = [
         _token_f1(reference, prediction)
         for reference, prediction in zip(references, predictions)
-    ) / len(references)
-    rouge_l = sum(
+    ]
+    rouge_l_values = [
         rouge_l_score(reference, prediction)
         for reference, prediction in zip(references, predictions)
-    ) / len(references)
+    ]
+    token_f1 = sum(token_f1_values) / len(references)
+    rouge_l = sum(rouge_l_values) / len(references)
+    token_f1_interval = bootstrap_mean_interval(token_f1_values)
+    rouge_l_interval = bootstrap_mean_interval(rouge_l_values)
     bleu_2 = sum(
         bleu_2_score(reference, prediction)
         for reference, prediction in zip(references, predictions)
@@ -259,7 +282,11 @@ def caption_metrics(
         "n_examples": len(references),
         "exact_match": exact_matches / len(references),
         "token_f1": token_f1,
+        "token_f1_ci95_low": token_f1_interval[0],
+        "token_f1_ci95_high": token_f1_interval[1],
         "rouge_l": rouge_l,
+        "rouge_l_ci95_low": rouge_l_interval[0],
+        "rouge_l_ci95_high": rouge_l_interval[1],
         "bleu_2": bleu_2,
         **caption_diagnostics(references, predictions),
     }
