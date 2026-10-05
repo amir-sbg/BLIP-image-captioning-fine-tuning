@@ -68,6 +68,36 @@ def caption_dataset_profile(
     }
 
 
+def caption_split_overlap(
+    train_dataset: Dataset,
+    validation_dataset: Dataset,
+    caption_column: str | None = None,
+) -> dict[str, float | int]:
+    """Measure exact normalized-caption overlap across dataset splits."""
+
+    train_column = resolve_caption_column(train_dataset, caption_column)
+    validation_column = resolve_caption_column(validation_dataset, caption_column)
+
+    def caption_keys(dataset: Dataset, column: str) -> set[str]:
+        return {
+            normalized
+            for value in dataset[column]
+            if (normalized := " ".join(str(value or "").casefold().split()))
+        }
+
+    train_keys = caption_keys(train_dataset, train_column)
+    validation_keys = caption_keys(validation_dataset, validation_column)
+    overlap = train_keys & validation_keys
+    return {
+        "train_unique_captions": len(train_keys),
+        "validation_unique_captions": len(validation_keys),
+        "overlapping_unique_captions": len(overlap),
+        "validation_overlap_rate": (
+            len(overlap) / len(validation_keys) if validation_keys else 0.0
+        ),
+    }
+
+
 def caption_length_percentiles(lengths: list[int]) -> dict[str, int]:
     if not lengths:
         return {"p50": 0, "p90": 0, "p95": 0}

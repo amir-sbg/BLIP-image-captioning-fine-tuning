@@ -8,6 +8,7 @@ from vlm_finetune.config import FineTuneConfig
 from vlm_finetune.data import (
     caption_length_percentiles,
     caption_dataset_profile,
+    caption_split_overlap,
     normalize_caption,
     prepare_dataset,
     resolve_caption_column,
@@ -57,6 +58,20 @@ def test_caption_dataset_profile_summarizes_split() -> None:
 
 def test_caption_length_percentiles_use_nearest_rank() -> None:
     assert caption_length_percentiles([1, 5, 2, 9]) == {"p50": 2, "p90": 9, "p95": 9}
+
+
+def test_caption_split_overlap_normalizes_case_and_whitespace() -> None:
+    train = Dataset.from_dict(
+        {"image": ["a", "b"], "text": ["Red bird", "blue fish"]}
+    )
+    validation = Dataset.from_dict(
+        {"image": ["c", "d"], "text": [" red   BIRD ", "green frog"]}
+    )
+
+    report = caption_split_overlap(train, validation)
+
+    assert report["overlapping_unique_captions"] == 1
+    assert report["validation_overlap_rate"] == 0.5
 
 
 def test_missing_image_column_is_explicit() -> None:

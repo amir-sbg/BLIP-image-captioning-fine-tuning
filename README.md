@@ -9,7 +9,7 @@ The default experiment uses `lambdalabs/pokemon-blip-captions`. Sample limits an
 1. Load the dataset and create a reproducible train/validation split.
 2. Normalize captions and prepare BLIP processor inputs with padded labels masked from the loss.
 3. Fine-tune `BlipForConditionalGeneration` with the Hugging Face Trainer.
-4. Evaluate generated captions with exact match, token F1, length bias, diversity, repetition, vocabulary coverage, and empty-output checks.
+4. Evaluate generated captions with token F1, ROUGE-L, BLEU-2, bootstrap intervals, length slices, diversity, repetition, and vocabulary coverage.
 5. Save per-example predictions for qualitative review and use the trained processor/model for local inference.
 
 ## Setup
@@ -61,7 +61,8 @@ Use `--image-dir` for a folder, `--recursive` for nested folders, and `--device 
 ## Outputs
 
 - `artifacts/` contains the fine-tuned model, processor, and Trainer checkpoints.
-- `reports/metrics.json` stores validation and generation diagnostics.
+- `reports/metrics.json` stores validation and generation diagnostics with uncertainty intervals.
+- `reports/data_profile.json` records split statistics and normalized-caption overlap.
 - `reports/caption_predictions.json` stores references, predictions, token F1, and length deltas.
 - `reports/inference.json` and `reports/inference.csv` provide local-image predictions.
 - `reports/inference_manifest.json` records the selected images and decoding settings.

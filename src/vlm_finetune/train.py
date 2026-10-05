@@ -8,7 +8,12 @@ from pathlib import Path
 from datasets import DatasetDict
 
 from .config import FineTuneConfig, prepare_output_directories
-from .data import caption_dataset_profile, load_caption_dataset, prepare_dataset
+from .data import (
+    caption_dataset_profile,
+    caption_split_overlap,
+    load_caption_dataset,
+    prepare_dataset,
+)
 from .evaluate import evaluate_captions
 from .model import load_blip
 from .training import run_training
@@ -47,6 +52,11 @@ def run(config: FineTuneConfig) -> dict:
         )
         for split, dataset in raw_dataset.items()
     }
+    data_profile["split_overlap"] = caption_split_overlap(
+        raw_dataset["train"],
+        raw_dataset["validation"],
+        caption_column=config.caption_column,
+    )
     _write_json(data_profile, config.report_dir / "data_profile.json")
     model, processor = load_blip(config.model_name)
     tokenized_dataset = DatasetDict(
