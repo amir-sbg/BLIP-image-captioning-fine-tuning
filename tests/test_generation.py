@@ -14,6 +14,7 @@ from vlm_finetune.metrics import (
     caption_quality_flags,
     novel_prediction_token_rate,
     reference_token_coverage,
+    rouge_l_score,
     token_f1_score,
 )
 
@@ -221,6 +222,14 @@ def test_pair_flags_mark_bad_individual_predictions() -> None:
 
 def test_token_f1_keeps_unicode_caption_words() -> None:
     assert token_f1_score("یک گربه", "گربه") == pytest.approx(2 / 3)
+
+
+def test_rouge_l_rewards_caption_word_order() -> None:
+    ordered = rouge_l_score("a red bird on branch", "red bird on branch")
+    shuffled = rouge_l_score("a red bird on branch", "branch bird red on")
+
+    assert ordered > shuffled
+    assert rouge_l_score("", "") == 1.0
 
 
 def test_caption_metrics_reject_length_mismatch() -> None:

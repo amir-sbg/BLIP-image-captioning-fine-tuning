@@ -25,6 +25,28 @@ def token_f1_score(reference: str, prediction: str) -> float:
     return _token_f1(reference, prediction)
 
 
+def rouge_l_score(reference: str, prediction: str) -> float:
+    reference_tokens = _tokens(reference)
+    prediction_tokens = _tokens(prediction)
+    if not reference_tokens or not prediction_tokens:
+        return float(reference_tokens == prediction_tokens)
+
+    previous = [0] * (len(prediction_tokens) + 1)
+    for reference_token in reference_tokens:
+        current = [0]
+        for index, prediction_token in enumerate(prediction_tokens, start=1):
+            if reference_token == prediction_token:
+                current.append(previous[index - 1] + 1)
+            else:
+                current.append(max(current[-1], previous[index]))
+        previous = current
+
+    overlap = previous[-1]
+    precision = overlap / len(prediction_tokens)
+    recall = overlap / len(reference_tokens)
+    return 2 * precision * recall / (precision + recall)
+
+
 def caption_pair_diagnostics(reference: str, prediction: str) -> dict[str, float | int]:
     reference_tokens = _tokens(reference)
     prediction_tokens = _tokens(prediction)
@@ -32,6 +54,7 @@ def caption_pair_diagnostics(reference: str, prediction: str) -> dict[str, float
         "reference_tokens": len(reference_tokens),
         "prediction_tokens": len(prediction_tokens),
         "token_f1": round(token_f1_score(reference, prediction), 4),
+        "rouge_l": round(rouge_l_score(reference, prediction), 4),
         "length_delta": len(prediction_tokens) - len(reference_tokens),
     }
 
@@ -197,10 +220,15 @@ def caption_metrics(
         _token_f1(reference, prediction)
         for reference, prediction in zip(references, predictions)
     ) / len(references)
+    rouge_l = sum(
+        rouge_l_score(reference, prediction)
+        for reference, prediction in zip(references, predictions)
+    ) / len(references)
     metrics = {
         "n_examples": len(references),
         "exact_match": exact_matches / len(references),
         "token_f1": token_f1,
+        "rouge_l": rouge_l,
         **caption_diagnostics(references, predictions),
     }
     metrics["quality_flags"] = caption_quality_flags(metrics)
