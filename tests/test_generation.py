@@ -15,6 +15,7 @@ from vlm_finetune.metrics import (
     caption_length_buckets,
     caption_length_slice_metrics,
     caption_quality_flags,
+    chrf_score,
     novel_prediction_token_rate,
     reference_token_coverage,
     rouge_l_score,
@@ -243,6 +244,15 @@ def test_bleu_2_rewards_local_phrase_agreement() -> None:
     assert exact > reordered
 
 
+def test_chrf_gives_partial_credit_to_morphological_variants() -> None:
+    exact = chrf_score("two running dogs", "two running dogs")
+    related = chrf_score("two running dogs", "two runners and a dog")
+    unrelated = chrf_score("two running dogs", "blue airplane")
+
+    assert exact == pytest.approx(1.0)
+    assert exact > related > unrelated
+
+
 def test_bootstrap_interval_is_reproducible_and_contains_mean() -> None:
     first = bootstrap_mean_interval([0.2, 0.4, 0.8, 1.0], samples=200, seed=7)
     second = bootstrap_mean_interval([0.2, 0.4, 0.8, 1.0], samples=200, seed=7)
@@ -342,5 +352,6 @@ def test_caption_predictions_are_saved_for_review(tmp_path) -> None:
     assert '"reference": "a red car"' in records
     assert '"prediction": "a green bike"' in records
     assert '"token_f1"' in records
+    assert '"chrf"' in records
     assert '"length_delta"' in records
     assert '"flags"' in records

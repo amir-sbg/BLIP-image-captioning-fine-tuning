@@ -74,6 +74,34 @@ def bleu_2_score(reference: str, prediction: str) -> float:
     return brevity_penalty * sqrt(exp(log(precisions[0]) + log(precisions[1])))
 
 
+def chrf_score(
+    reference: str,
+    prediction: str,
+    max_order: int = 3,
+    beta: float = 2.0,
+) -> float:
+    """Character n-gram F-score, useful for morphology and near-miss spellings."""
+
+    if max_order < 1 or beta <= 0:
+        raise ValueError("max_order and beta must be positive")
+    reference_chars = list(" ".join(reference.casefold().split()))
+    prediction_chars = list(" ".join(prediction.casefold().split()))
+    if not reference_chars or not prediction_chars:
+        return float(reference_chars == prediction_chars)
+
+    scores = []
+    beta_squared = beta**2
+    for order in range(1, max_order + 1):
+        reference_ngrams = Counter(_ngrams(reference_chars, order))
+        prediction_ngrams = Counter(_ngrams(prediction_chars, order))
+        overlap = sum((reference_ngrams & prediction_ngrams).values())
+        precision = overlap / max(sum(prediction_ngrams.values()), 1)
+        recall = overlap / max(sum(reference_ngrams.values()), 1)
+        denominator = beta_squared * precision + recall
+        scores.append((1 + beta_squared) * precision * recall / denominator if denominator else 0.0)
+    return sum(scores) / len(scores)
+
+
 def bootstrap_mean_interval(
     values: list[float],
     samples: int = 1000,
@@ -101,6 +129,7 @@ def caption_pair_diagnostics(reference: str, prediction: str) -> dict[str, float
         "token_f1": round(token_f1_score(reference, prediction), 4),
         "rouge_l": round(rouge_l_score(reference, prediction), 4),
         "bleu_2": round(bleu_2_score(reference, prediction), 4),
+        "chrf": round(chrf_score(reference, prediction), 4),
         "length_delta": len(prediction_tokens) - len(reference_tokens),
     }
 
@@ -314,6 +343,10 @@ def caption_metrics(
         bleu_2_score(reference, prediction)
         for reference, prediction in zip(references, predictions)
     ) / len(references)
+    chrf = sum(
+        chrf_score(reference, prediction)
+        for reference, prediction in zip(references, predictions)
+    ) / len(references)
     metrics = {
         "n_examples": len(references),
         "exact_match": exact_matches / len(references),
@@ -324,6 +357,7 @@ def caption_metrics(
         "rouge_l_ci95_low": rouge_l_interval[0],
         "rouge_l_ci95_high": rouge_l_interval[1],
         "bleu_2": bleu_2,
+        "chrf": chrf,
         "length_slices": caption_length_slice_metrics(references, predictions),
         **caption_diagnostics(references, predictions),
     }

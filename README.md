@@ -9,7 +9,7 @@ The default experiment uses `lambdalabs/pokemon-blip-captions`. Sample limits an
 1. Load the dataset and create a reproducible train/validation split.
 2. Normalize captions and prepare BLIP processor inputs with padded labels masked from the loss.
 3. Fine-tune `BlipForConditionalGeneration` with the Hugging Face Trainer.
-4. Evaluate generated captions with token F1, ROUGE-L, BLEU-2, bootstrap intervals, length slices, diversity, repetition, and vocabulary coverage.
+4. Evaluate generated captions with token F1, ROUGE-L, BLEU-2, character-level chrF, bootstrap intervals, length slices, diversity, repetition, and vocabulary coverage.
 5. Save per-example predictions for qualitative review and use the trained processor/model for local inference.
 
 ## Setup
