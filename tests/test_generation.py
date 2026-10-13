@@ -287,6 +287,8 @@ def test_caption_diagnostics_reports_diversity_and_repetition() -> None:
     assert diagnostics["prediction_distinct_unigrams"] < 1.0
     assert diagnostics["prediction_distinct_bigrams"] < diagnostics["reference_distinct_bigrams"]
     assert diagnostics["prediction_repeated_bigram_rate"] > 0.0
+    assert diagnostics["duplicate_prediction_rate"] == 0.5
+    assert diagnostics["most_common_prediction_fraction"] == 1.0
 
 
 def test_caption_length_buckets_track_generation_length_bias() -> None:
@@ -331,6 +333,7 @@ def test_caption_quality_flags_surface_generation_failures() -> None:
             "prediction_repeated_bigram_rate": 0.25,
             "reference_token_coverage": 0.2,
             "novel_prediction_token_rate": 0.6,
+            "most_common_prediction_fraction": 0.75,
         }
     )
 
@@ -339,6 +342,7 @@ def test_caption_quality_flags_surface_generation_failures() -> None:
     assert "repetitive_bigrams" in flags
     assert "low_reference_vocabulary_coverage" in flags
     assert "many_novel_tokens" in flags
+    assert "possible_caption_collapse" in flags
 
 
 def test_caption_predictions_are_saved_for_review(tmp_path) -> None:

@@ -272,6 +272,10 @@ def caption_diagnostics(
     prediction_mean = _mean(prediction_lengths)
     empty_predictions = sum(length == 0 for length in prediction_lengths)
     length_buckets = caption_length_buckets(references, predictions)
+    normalized_predictions = [" ".join(_tokens(caption)) for caption in predictions]
+    nonempty_predictions = [caption for caption in normalized_predictions if caption]
+    prediction_counts = Counter(nonempty_predictions)
+    duplicate_predictions = sum(count - 1 for count in prediction_counts.values())
 
     return {
         "reference_mean_tokens": reference_mean,
@@ -291,6 +295,14 @@ def caption_diagnostics(
         "reference_distinct_bigrams": _distinct_ngram_ratio(references, 2),
         "empty_prediction_rate": empty_predictions / len(predictions) if predictions else 0.0,
         "empty_predictions": empty_predictions,
+        "duplicate_prediction_rate": (
+            duplicate_predictions / len(nonempty_predictions) if nonempty_predictions else 0.0
+        ),
+        "most_common_prediction_fraction": (
+            max(prediction_counts.values()) / len(nonempty_predictions)
+            if nonempty_predictions
+            else 0.0
+        ),
         "length_bucket_too_short": length_buckets["too_short"],
         "length_bucket_close": length_buckets["close"],
         "length_bucket_too_long": length_buckets["too_long"],
@@ -311,6 +323,8 @@ def caption_quality_flags(metrics: dict[str, float | int]) -> list[str]:
         flags.append("low_reference_vocabulary_coverage")
     if float(metrics.get("novel_prediction_token_rate", 0.0)) > 0.50:
         flags.append("many_novel_tokens")
+    if float(metrics.get("most_common_prediction_fraction", 0.0)) > 0.50:
+        flags.append("possible_caption_collapse")
     return flags
 
 
