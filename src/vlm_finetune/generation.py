@@ -26,6 +26,8 @@ def generate_captions(
     num_beams: int = 3,
     repetition_penalty: float = 1.0,
     no_repeat_ngram_size: int = 0,
+    temperature: float | None = None,
+    top_p: float | None = None,
     prompt: str | None = None,
 ) -> list[str]:
     if batch_size < 1:
@@ -43,6 +45,10 @@ def generate_captions(
         raise ValueError("repetition_penalty must be at least 1.0")
     if no_repeat_ngram_size < 0:
         raise ValueError("no_repeat_ngram_size must not be negative")
+    if temperature is not None and temperature <= 0:
+        raise ValueError("temperature must be greater than zero")
+    if top_p is not None and not 0.0 < top_p <= 1.0:
+        raise ValueError("top_p must be between zero and one")
     if prompt is not None and not prompt.strip():
         raise ValueError("prompt must not be empty")
     if not images:
@@ -69,6 +75,12 @@ def generate_captions(
             }
             if min_new_tokens is not None:
                 generate_kwargs["min_new_tokens"] = min_new_tokens
+            if temperature is not None or top_p is not None:
+                generate_kwargs["do_sample"] = True
+            if temperature is not None:
+                generate_kwargs["temperature"] = temperature
+            if top_p is not None:
+                generate_kwargs["top_p"] = top_p
             generated_ids = model.generate(**inputs, **generate_kwargs)
             decoded = list(
                 processor.batch_decode(

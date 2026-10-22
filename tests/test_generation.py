@@ -46,6 +46,9 @@ class TinyModel:
         self.num_beams = None
         self.min_new_tokens = None
         self.no_repeat_ngram_size = None
+        self.do_sample = False
+        self.temperature = None
+        self.top_p = None
 
     def eval(self):
         return self
@@ -58,11 +61,17 @@ class TinyModel:
         repetition_penalty,
         no_repeat_ngram_size,
         min_new_tokens=None,
+        do_sample=False,
+        temperature=None,
+        top_p=None,
     ):
         self.num_beams = num_beams
         self.repetition_penalty = repetition_penalty
         self.min_new_tokens = min_new_tokens
         self.no_repeat_ngram_size = no_repeat_ngram_size
+        self.do_sample = do_sample
+        self.temperature = temperature
+        self.top_p = top_p
         return torch.zeros((len(pixel_values), 3), dtype=torch.long)
 
 
@@ -181,6 +190,33 @@ def test_generation_passes_extra_decoding_controls_to_model() -> None:
 
     assert model.min_new_tokens == 4
     assert model.no_repeat_ngram_size == 3
+
+
+def test_generation_enables_nucleus_sampling_controls() -> None:
+    model = TinyModel()
+    generate_captions(
+        model,
+        TinyProcessor(),
+        ["one"],
+        torch.device("cpu"),
+        temperature=0.7,
+        top_p=0.9,
+    )
+
+    assert model.do_sample is True
+    assert model.temperature == 0.7
+    assert model.top_p == 0.9
+
+
+def test_generation_rejects_invalid_sampling_controls() -> None:
+    with pytest.raises(ValueError, match="temperature"):
+        generate_captions(
+            TinyModel(), TinyProcessor(), ["one"], torch.device("cpu"), temperature=0
+        )
+    with pytest.raises(ValueError, match="top_p"):
+        generate_captions(
+            TinyModel(), TinyProcessor(), ["one"], torch.device("cpu"), top_p=1.1
+        )
 
 
 def test_generation_passes_prompt_to_processor() -> None:

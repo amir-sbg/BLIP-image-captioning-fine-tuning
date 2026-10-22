@@ -79,7 +79,9 @@ def build_inference_manifest(
     num_beams: int,
     repetition_penalty: float,
     no_repeat_ngram_size: int,
-    prompt: str | None,
+    temperature: float | None = None,
+    top_p: float | None = None,
+    prompt: str | None = None,
 ) -> dict:
     return {
         "model_dir": str(model_dir),
@@ -94,6 +96,8 @@ def build_inference_manifest(
             "num_beams": num_beams,
             "repetition_penalty": repetition_penalty,
             "no_repeat_ngram_size": no_repeat_ngram_size,
+            "temperature": temperature,
+            "top_p": top_p,
             "prompt": prompt,
         },
     }
@@ -119,6 +123,8 @@ def caption_files(
     num_beams: int = 3,
     repetition_penalty: float = 1.0,
     no_repeat_ngram_size: int = 0,
+    temperature: float | None = None,
+    top_p: float | None = None,
     prompt: str | None = None,
 ) -> list[dict[str, str]]:
     device = _select_device(device_name)
@@ -138,6 +144,8 @@ def caption_files(
         num_beams=num_beams,
         repetition_penalty=repetition_penalty,
         no_repeat_ngram_size=no_repeat_ngram_size,
+        temperature=temperature,
+        top_p=top_p,
         prompt=prompt,
     )
     return [
@@ -161,6 +169,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--num-beams", type=int, default=3)
     parser.add_argument("--repetition-penalty", type=float, default=1.0)
     parser.add_argument("--no-repeat-ngram-size", type=int, default=0)
+    parser.add_argument("--temperature", type=float)
+    parser.add_argument("--top-p", type=float)
     parser.add_argument("--prompt", help="optional text prompt passed to BLIP for every image")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--csv-output", type=Path)
@@ -198,6 +208,8 @@ if __name__ == "__main__":
         num_beams=args.num_beams,
         repetition_penalty=args.repetition_penalty,
         no_repeat_ngram_size=args.no_repeat_ngram_size,
+        temperature=args.temperature,
+        top_p=args.top_p,
         prompt=args.prompt,
     )
     if args.output is not None:
@@ -216,6 +228,8 @@ if __name__ == "__main__":
                 num_beams=args.num_beams,
                 repetition_penalty=args.repetition_penalty,
                 no_repeat_ngram_size=args.no_repeat_ngram_size,
+                temperature=args.temperature,
+                top_p=args.top_p,
                 prompt=args.prompt,
             ),
             args.manifest_output,

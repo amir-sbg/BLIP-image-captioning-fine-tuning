@@ -31,6 +31,8 @@ class FineTuneConfig:
     eval_num_beams: int = 3
     eval_repetition_penalty: float = 1.0
     eval_no_repeat_ngram_size: int = 0
+    eval_temperature: float | None = None
+    eval_top_p: float | None = None
     resume_from_checkpoint: Path | None = None
     seed: int = 42
 
@@ -78,6 +80,10 @@ class FineTuneConfig:
             raise ValueError("eval_repetition_penalty must be at least 1.0")
         if self.eval_no_repeat_ngram_size < 0:
             raise ValueError("eval_no_repeat_ngram_size must not be negative")
+        if self.eval_temperature is not None and self.eval_temperature <= 0:
+            raise ValueError("eval_temperature must be greater than zero")
+        if self.eval_top_p is not None and not 0.0 < self.eval_top_p <= 1.0:
+            raise ValueError("eval_top_p must be between zero and one")
 
 
 def prepare_output_directories(config: FineTuneConfig) -> None:

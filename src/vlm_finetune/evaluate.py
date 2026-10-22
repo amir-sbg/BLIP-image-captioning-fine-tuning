@@ -46,6 +46,8 @@ def evaluate_captions(
     num_beams: int = 3,
     repetition_penalty: float = 1.0,
     no_repeat_ngram_size: int = 0,
+    temperature: float | None = None,
+    top_p: float | None = None,
     predictions_path: Path | None = None,
 ) -> dict[str, float | int]:
     if image_column not in dataset.column_names:
@@ -63,6 +65,8 @@ def evaluate_captions(
         num_beams=num_beams,
         repetition_penalty=repetition_penalty,
         no_repeat_ngram_size=no_repeat_ngram_size,
+        temperature=temperature,
+        top_p=top_p,
     )
     if predictions_path is not None:
         save_caption_predictions(references, predictions, predictions_path)

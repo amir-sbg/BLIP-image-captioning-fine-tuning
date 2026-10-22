@@ -55,11 +55,17 @@ def test_inference_parser_reads_extra_decoding_controls(tmp_path) -> None:
             "4",
             "--no-repeat-ngram-size",
             "3",
+            "--temperature",
+            "0.8",
+            "--top-p",
+            "0.92",
         ]
     )
 
     assert args.min_new_tokens == 4
     assert args.no_repeat_ngram_size == 3
+    assert args.temperature == 0.8
+    assert args.top_p == 0.92
 
 
 def test_inference_parser_accepts_a_caption_prompt(tmp_path) -> None:
@@ -175,6 +181,8 @@ def test_inference_manifest_records_decoding_settings(tmp_path) -> None:
     assert manifest["decoding"]["min_new_tokens"] == 4
     assert manifest["decoding"]["num_beams"] == 4
     assert manifest["decoding"]["no_repeat_ngram_size"] == 3
+    assert manifest["decoding"]["temperature"] is None
+    assert manifest["decoding"]["top_p"] is None
     assert manifest["decoding"]["prompt"] == "a close-up photo"
 
 

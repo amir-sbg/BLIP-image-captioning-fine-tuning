@@ -91,6 +91,8 @@ def run(config: FineTuneConfig) -> dict:
         num_beams=config.eval_num_beams,
         repetition_penalty=config.eval_repetition_penalty,
         no_repeat_ngram_size=config.eval_no_repeat_ngram_size,
+        temperature=config.eval_temperature,
+        top_p=config.eval_top_p,
         predictions_path=config.report_dir / "caption_predictions.json",
     )
     _write_json(metrics, config.report_dir / "metrics.json")
@@ -126,6 +128,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--eval-num-beams", type=int, default=3)
     parser.add_argument("--eval-repetition-penalty", type=float, default=1.0)
     parser.add_argument("--eval-no-repeat-ngram-size", type=int, default=0)
+    parser.add_argument("--eval-temperature", type=float)
+    parser.add_argument("--eval-top-p", type=float)
     parser.add_argument("--resume-from-checkpoint", type=Path)
     parser.add_argument("--seed", type=int, default=42)
     return parser

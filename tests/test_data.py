@@ -130,3 +130,7 @@ def test_fine_tune_config_validates_eval_decoding() -> None:
         FineTuneConfig(max_new_tokens=8, eval_min_new_tokens=9)
     with pytest.raises(ValueError, match="eval_no_repeat_ngram_size"):
         FineTuneConfig(eval_no_repeat_ngram_size=-1)
+    with pytest.raises(ValueError, match="eval_temperature"):
+        FineTuneConfig(eval_temperature=0)
+    with pytest.raises(ValueError, match="eval_top_p"):
+        FineTuneConfig(eval_top_p=1.1)

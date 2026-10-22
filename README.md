@@ -41,7 +41,7 @@ python -m vlm_finetune.train \
   --report-dir reports/smoke-run
 ```
 
-Training can resume from a Trainer checkpoint with `--resume-from-checkpoint`. Generation settings used during validation, including beam width, minimum length, repetition penalty, and no-repeat n-gram size, are available as command-line options.
+Training can resume from a Trainer checkpoint with `--resume-from-checkpoint`. Generation settings used during validation, including beam width, minimum length, repetition controls, temperature, and nucleus sampling, are available as command-line options.
 
 Two aligned prediction exports can be compared with a paired bootstrap interval:
 
@@ -61,6 +61,8 @@ python -m vlm_finetune.infer \
   --model-dir artifacts/blip-captioner \
   --image examples/photo-one.jpg examples/photo-two.jpg \
   --num-beams 3 \
+  --temperature 0.8 \
+  --top-p 0.9 \
   --output reports/inference.json \
   --csv-output reports/inference.csv
 ```
