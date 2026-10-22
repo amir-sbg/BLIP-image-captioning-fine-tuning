@@ -43,6 +43,15 @@ python -m vlm_finetune.train \
 
 Training can resume from a Trainer checkpoint with `--resume-from-checkpoint`. Generation settings used during validation, including beam width, minimum length, repetition penalty, and no-repeat n-gram size, are available as command-line options.
 
+Two aligned prediction exports can be compared with a paired bootstrap interval:
+
+```bash
+python -m vlm_finetune.compare \
+  --baseline reports/baseline_predictions.json \
+  --candidate reports/candidate_predictions.json \
+  --metric chrf
+```
+
 ## Inference
 
 Caption individual files:

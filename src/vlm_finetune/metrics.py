@@ -131,6 +131,59 @@ def bootstrap_mean_interval(
     return means[int(0.025 * (samples - 1))], means[int(0.975 * (samples - 1))]
 
 
+def paired_bootstrap_difference(
+    references: list[str],
+    baseline_predictions: list[str],
+    candidate_predictions: list[str],
+    metric: str = "token_f1",
+    samples: int = 1000,
+    seed: int = 42,
+) -> dict[str, float | int | str]:
+    """Estimate the paired candidate-minus-baseline caption score difference."""
+
+    scorers = {
+        "token_f1": token_f1_score,
+        "rouge_l": rouge_l_score,
+        "bleu_2": bleu_2_score,
+        "chrf": chrf_score,
+    }
+    if metric not in scorers:
+        raise ValueError(f"unknown caption metric: {metric}")
+    if not references or not (
+        len(references) == len(baseline_predictions) == len(candidate_predictions)
+    ):
+        raise ValueError("references and both prediction sets must have the same non-zero length")
+    if samples < 100:
+        raise ValueError("samples must be at least 100")
+
+    scorer = scorers[metric]
+    differences = [
+        scorer(reference, candidate) - scorer(reference, baseline)
+        for reference, baseline, candidate in zip(
+            references,
+            baseline_predictions,
+            candidate_predictions,
+        )
+    ]
+    random = Random(seed)
+    count = len(differences)
+    bootstrap_differences = sorted(
+        sum(differences[random.randrange(count)] for _ in range(count)) / count
+        for _ in range(samples)
+    )
+    return {
+        "metric": metric,
+        "n_examples": count,
+        "candidate_minus_baseline": sum(differences) / count,
+        "ci95_low": bootstrap_differences[int(0.025 * (samples - 1))],
+        "ci95_high": bootstrap_differences[int(0.975 * (samples - 1))],
+        "probability_candidate_better": sum(
+            difference > 0.0 for difference in bootstrap_differences
+        )
+        / samples,
+    }
+
+
 def caption_pair_diagnostics(reference: str, prediction: str) -> dict[str, float | int]:
     reference_tokens = _tokens(reference)
     prediction_tokens = _tokens(prediction)

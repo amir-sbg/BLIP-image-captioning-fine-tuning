@@ -18,6 +18,7 @@ from vlm_finetune.metrics import (
     chrf_score,
     lexical_precision_recall,
     novel_prediction_token_rate,
+    paired_bootstrap_difference,
     reference_token_coverage,
     rouge_l_score,
     token_f1_score,
@@ -275,6 +276,20 @@ def test_bootstrap_interval_is_reproducible_and_contains_mean() -> None:
 
     assert first == second
     assert first[0] <= 0.6 <= first[1]
+
+
+def test_paired_bootstrap_detects_a_better_caption_run() -> None:
+    report = paired_bootstrap_difference(
+        ["a red bird", "a blue fish", "a green car"],
+        ["object", "animal", "vehicle"],
+        ["a red bird", "a blue fish", "a green car"],
+        samples=200,
+        seed=7,
+    )
+
+    assert report["candidate_minus_baseline"] > 0
+    assert report["ci95_low"] > 0
+    assert report["probability_candidate_better"] == 1.0
 
 
 def test_caption_metrics_reject_length_mismatch() -> None:
