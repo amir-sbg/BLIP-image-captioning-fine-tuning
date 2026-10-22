@@ -16,6 +16,7 @@ from vlm_finetune.metrics import (
     caption_length_slice_metrics,
     caption_quality_flags,
     chrf_score,
+    lexical_precision_recall,
     novel_prediction_token_rate,
     reference_token_coverage,
     rouge_l_score,
@@ -204,6 +205,8 @@ def test_caption_metrics_include_token_overlap() -> None:
     assert metrics["exact_match"] == 0
     assert metrics["reference_mean_tokens"] == 3
     assert metrics["prediction_mean_tokens"] == 2.5
+    assert 0 < metrics["lexical_precision"] <= 1
+    assert 0 < metrics["lexical_recall"] <= 1
 
 
 def test_pair_diagnostics_track_single_caption_error() -> None:
@@ -213,13 +216,26 @@ def test_pair_diagnostics_track_single_caption_error() -> None:
     assert diagnostics["prediction_tokens"] == 2
     assert diagnostics["length_delta"] == -2
     assert diagnostics["token_f1"] == pytest.approx(0.6667)
+    assert diagnostics["lexical_precision"] == 1.0
+    assert diagnostics["lexical_recall"] == 0.5
     assert token_f1_score("red bird", "red bird") == 1.0
+
+
+def test_lexical_precision_and_recall_separate_additions_from_omissions() -> None:
+    precision, recall = lexical_precision_recall(
+        "a red bird on branch",
+        "red bird near water",
+    )
+
+    assert precision == pytest.approx(0.5)
+    assert recall == pytest.approx(0.4)
 
 
 def test_pair_flags_mark_bad_individual_predictions() -> None:
     assert caption_pair_flags("a detailed red bird on a branch", "") == [
         "empty_prediction",
         "low_token_overlap",
+        "many_omitted_reference_tokens",
         "much_shorter_than_reference",
     ]
 

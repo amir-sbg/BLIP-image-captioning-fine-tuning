@@ -23,6 +23,17 @@ def _token_f1(reference: str, prediction: str) -> float:
     return 2 * precision * recall / (precision + recall)
 
 
+def lexical_precision_recall(reference: str, prediction: str) -> tuple[float, float]:
+    """Return token precision and recall for addition/omission analysis."""
+
+    reference_tokens = Counter(_tokens(reference))
+    prediction_tokens = Counter(_tokens(prediction))
+    overlap = sum((reference_tokens & prediction_tokens).values())
+    precision = overlap / sum(prediction_tokens.values()) if prediction_tokens else 0.0
+    recall = overlap / sum(reference_tokens.values()) if reference_tokens else 0.0
+    return precision, recall
+
+
 def token_f1_score(reference: str, prediction: str) -> float:
     return _token_f1(reference, prediction)
 
@@ -123,10 +134,13 @@ def bootstrap_mean_interval(
 def caption_pair_diagnostics(reference: str, prediction: str) -> dict[str, float | int]:
     reference_tokens = _tokens(reference)
     prediction_tokens = _tokens(prediction)
+    lexical_precision, lexical_recall = lexical_precision_recall(reference, prediction)
     return {
         "reference_tokens": len(reference_tokens),
         "prediction_tokens": len(prediction_tokens),
         "token_f1": round(token_f1_score(reference, prediction), 4),
+        "lexical_precision": round(lexical_precision, 4),
+        "lexical_recall": round(lexical_recall, 4),
         "rouge_l": round(rouge_l_score(reference, prediction), 4),
         "bleu_2": round(bleu_2_score(reference, prediction), 4),
         "chrf": round(chrf_score(reference, prediction), 4),
@@ -141,6 +155,10 @@ def caption_pair_flags(reference: str, prediction: str) -> list[str]:
         flags.append("empty_prediction")
     if float(diagnostics["token_f1"]) < 0.25:
         flags.append("low_token_overlap")
+    if diagnostics["prediction_tokens"] and float(diagnostics["lexical_precision"]) < 0.5:
+        flags.append("many_unmatched_prediction_tokens")
+    if diagnostics["reference_tokens"] and float(diagnostics["lexical_recall"]) < 0.5:
+        flags.append("many_omitted_reference_tokens")
     if int(diagnostics["length_delta"]) <= -3:
         flags.append("much_shorter_than_reference")
     if int(diagnostics["length_delta"]) >= 4:
@@ -345,6 +363,10 @@ def caption_metrics(
         _token_f1(reference, prediction)
         for reference, prediction in zip(references, predictions)
     ]
+    precision_recall_values = [
+        lexical_precision_recall(reference, prediction)
+        for reference, prediction in zip(references, predictions)
+    ]
     rouge_l_values = [
         rouge_l_score(reference, prediction)
         for reference, prediction in zip(references, predictions)
@@ -365,6 +387,10 @@ def caption_metrics(
         "n_examples": len(references),
         "exact_match": exact_matches / len(references),
         "token_f1": token_f1,
+        "lexical_precision": sum(value[0] for value in precision_recall_values)
+        / len(references),
+        "lexical_recall": sum(value[1] for value in precision_recall_values)
+        / len(references),
         "token_f1_ci95_low": token_f1_interval[0],
         "token_f1_ci95_high": token_f1_interval[1],
         "rouge_l": rouge_l,
